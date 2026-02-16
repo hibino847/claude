@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>伝説のまもりびと - タワーディフェンス</title>
+<title>伝説のまもりびと - 横スクロールタワーディフェンス</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: #1a0a2e;
-  color: #e0d0ff;
+  background: #1a2a1a;
+  color: #e0ffe0;
   font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
   overflow: hidden;
   display: flex;
@@ -25,8 +25,8 @@ body {
   justify-content: space-between;
   width: 960px;
   padding: 8px 16px;
-  background: linear-gradient(180deg, #2d1b4e, #1a0a2e);
-  border-bottom: 2px solid #6a3fad;
+  background: linear-gradient(180deg, #2d4a1e, #1a2a1a);
+  border-bottom: 2px solid #4a8a2a;
 }
 
 #game-header h1 {
@@ -34,7 +34,6 @@ body {
   background: linear-gradient(90deg, #ffd700, #ff8c00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: none;
 }
 
 .hud-info {
@@ -61,15 +60,15 @@ body {
 
 canvas {
   display: block;
-  cursor: crosshair;
-  border: 2px solid #6a3fad;
+  cursor: pointer;
+  border: 2px solid #4a8a2a;
   border-right: none;
 }
 
 #side-panel {
   width: 200px;
-  background: linear-gradient(180deg, #2d1b4e, #1a0a2e);
-  border: 2px solid #6a3fad;
+  background: linear-gradient(180deg, #2d4a1e, #1a2a1a);
+  border: 2px solid #4a8a2a;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -82,82 +81,72 @@ canvas {
   font-size: 14px;
   text-align: center;
   color: #ffd700;
-  border-bottom: 1px solid #6a3fad;
+  border-bottom: 1px solid #4a8a2a;
   padding-bottom: 6px;
 }
 
-.tower-btn {
+.ally-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 8px;
-  background: rgba(106, 63, 173, 0.3);
-  border: 1px solid #6a3fad;
+  background: rgba(74, 138, 42, 0.3);
+  border: 1px solid #4a8a2a;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #e0d0ff;
+  color: #e0ffe0;
 }
 
-.tower-btn:hover {
-  background: rgba(106, 63, 173, 0.6);
+.ally-btn:hover {
+  background: rgba(74, 138, 42, 0.6);
   transform: scale(1.02);
 }
 
-.tower-btn.selected {
+.ally-btn.selected {
   background: rgba(255, 215, 0, 0.2);
   border-color: #ffd700;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
-.tower-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.tower-btn .tower-icon {
+.ally-btn .ally-icon {
   font-size: 28px;
   margin-bottom: 4px;
 }
 
-.tower-btn .tower-name {
+.ally-btn .ally-name {
   font-size: 12px;
   font-weight: bold;
 }
 
-.tower-btn .tower-cost {
-  font-size: 11px;
-  color: #ffd700;
-}
-
-.tower-btn .tower-desc {
+.ally-btn .ally-desc {
   font-size: 10px;
-  color: #a090c0;
+  color: #a0c090;
   text-align: center;
   margin-top: 2px;
 }
 
-#tower-info {
+#ally-info {
   background: rgba(0,0,0,0.3);
-  border: 1px solid #6a3fad;
+  border: 1px solid #4a8a2a;
   border-radius: 6px;
   padding: 8px;
   font-size: 11px;
   display: none;
 }
 
-#tower-info h4 {
+#ally-info h4 {
   color: #ffd700;
   margin-bottom: 4px;
 }
 
-#tower-info .stat {
+#ally-info .stat {
   display: flex;
   justify-content: space-between;
   margin: 2px 0;
 }
 
-#upgrade-btn, #sell-btn {
+#upgrade-btn {
   padding: 6px;
   border: 1px solid;
   border-radius: 4px;
@@ -165,23 +154,14 @@ canvas {
   font-size: 11px;
   font-family: inherit;
   margin-top: 4px;
-}
-
-#upgrade-btn {
   background: rgba(0, 150, 0, 0.3);
   border-color: #00aa00;
   color: #88ff88;
+  width: 100%;
 }
 
 #upgrade-btn:hover { background: rgba(0, 150, 0, 0.5); }
-
-#sell-btn {
-  background: rgba(150, 0, 0, 0.3);
-  border-color: #aa0000;
-  color: #ff8888;
-}
-
-#sell-btn:hover { background: rgba(150, 0, 0, 0.5); }
+#upgrade-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #wave-btn {
   padding: 10px;
@@ -205,6 +185,22 @@ canvas {
 #wave-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.speed-btn {
+  padding: 4px 8px;
+  background: rgba(74, 138, 42, 0.3);
+  border: 1px solid #4a8a2a;
+  border-radius: 4px;
+  color: #e0ffe0;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.speed-btn.active {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
 }
 
 #game-over-overlay, #victory-overlay {
@@ -240,8 +236,8 @@ canvas {
 
 #restart-btn, #restart-btn2 {
   padding: 12px 40px;
-  background: linear-gradient(180deg, #6a3fad, #4a2f7d);
-  border: 2px solid #8855cc;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
   border-radius: 8px;
   color: #fff;
   font-size: 16px;
@@ -250,23 +246,7 @@ canvas {
 }
 
 #restart-btn:hover, #restart-btn2:hover {
-  background: linear-gradient(180deg, #8855cc, #6a3fad);
-}
-
-.speed-btn {
-  padding: 4px 8px;
-  background: rgba(106, 63, 173, 0.3);
-  border: 1px solid #6a3fad;
-  border-radius: 4px;
-  color: #e0d0ff;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-}
-
-.speed-btn.active {
-  background: rgba(255, 215, 0, 0.3);
-  border-color: #ffd700;
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
 </style>
 </head>
@@ -289,46 +269,17 @@ canvas {
 <div id="game-container">
   <canvas id="gameCanvas" width="760" height="600"></canvas>
   <div id="side-panel">
-    <h3>守り人を配置</h3>
-    <div class="tower-btn" onclick="selectTower(0)">
-      <div class="tower-icon">🏹</div>
-      <div class="tower-name">弓兵</div>
-      <div class="tower-cost">50G</div>
-      <div class="tower-desc">基本的な遠距離攻撃</div>
-    </div>
-    <div class="tower-btn" onclick="selectTower(1)">
-      <div class="tower-icon">⚔️</div>
-      <div class="tower-name">剣士</div>
-      <div class="tower-cost">80G</div>
-      <div class="tower-desc">高火力・近距離</div>
-    </div>
-    <div class="tower-btn" onclick="selectTower(2)">
-      <div class="tower-icon">🔮</div>
-      <div class="tower-name">魔法使い</div>
-      <div class="tower-cost">120G</div>
-      <div class="tower-desc">範囲攻撃・スロー</div>
-    </div>
-    <div class="tower-btn" onclick="selectTower(3)">
-      <div class="tower-icon">🛡️</div>
-      <div class="tower-name">聖騎士</div>
-      <div class="tower-cost">200G</div>
-      <div class="tower-desc">高耐久・周囲バフ</div>
-    </div>
-    <div class="tower-btn" onclick="selectTower(4)">
-      <div class="tower-icon">🌙</div>
-      <div class="tower-name">陰陽師</div>
-      <div class="tower-cost">300G</div>
-      <div class="tower-desc">最強の範囲魔法</div>
-    </div>
+    <h3>味方ユニット</h3>
+    <div id="ally-buttons"></div>
 
-    <div id="tower-info">
+    <div id="ally-info">
       <h4 id="info-name"></h4>
       <div class="stat"><span>レベル</span><span id="info-level"></span></div>
       <div class="stat"><span>攻撃力</span><span id="info-damage"></span></div>
       <div class="stat"><span>射程</span><span id="info-range"></span></div>
       <div class="stat"><span>速度</span><span id="info-speed"></span></div>
-      <button id="upgrade-btn" onclick="upgradeTower()">強化 (<span id="upgrade-cost"></span>G)</button>
-      <button id="sell-btn" onclick="sellTower()">売却 (<span id="sell-value"></span>G)</button>
+      <div class="stat"><span>HP</span><span id="info-hp"></span></div>
+      <button id="upgrade-btn" onclick="upgradeAlly()">強化 (<span id="upgrade-cost"></span>G)</button>
     </div>
 
     <button id="wave-btn" onclick="startWave()">次のWaveへ ⚔️</button>
@@ -351,65 +302,31 @@ canvas {
 
 <script>
 // ===== ゲーム定数 =====
-const TILE = 40;
-const COLS = 19;
-const ROWS = 15;
+const CANVAS_W = 760;
+const CANVAS_H = 600;
+const LANE_COUNT = 4;
+const LANE_H = 100;
+const LANE_TOP = 80;  // レーンの開始Y位置
+const GOAL_X = 700;   // 味方の防衛ライン（右側）
+const SPAWN_X = -30;  // 敵のスポーン位置（左端の外）
 const MAX_WAVE = 30;
 
-// マップ: 0=草, 1=道, 2=配置不可装飾
-const MAP = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
-  [0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-// 経路 (タイル座標)
-const PATH = [
-  {x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},
-  {x:3,y:2},
-  {x:3,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:7,y:3},{x:8,y:3},
-  {x:8,y:4},
-  {x:8,y:5},{x:9,y:5},{x:10,y:5},{x:11,y:5},{x:12,y:5},
-  {x:12,y:6},
-  {x:12,y:7},{x:13,y:7},{x:14,y:7},{x:15,y:7},
-  {x:15,y:8},
-  {x:15,y:9},{x:14,y:9},{x:13,y:9},{x:12,y:9},{x:11,y:9},{x:10,y:9},{x:9,y:9},{x:8,y:9},
-  {x:8,y:10},
-  {x:8,y:11},{x:7,y:11},{x:6,y:11},{x:5,y:11},{x:4,y:11},{x:3,y:11},
-  {x:3,y:12},
-  {x:3,y:13},{x:4,y:13},{x:5,y:13},{x:6,y:13},{x:7,y:13},{x:8,y:13},{x:9,y:13},{x:10,y:13},{x:11,y:13},{x:12,y:13},{x:13,y:13},{x:14,y:13},{x:15,y:13},{x:16,y:13},{x:17,y:13},{x:18,y:13},
-];
-
-// タワー定義
-const TOWER_DEFS = [
-  { name: '弓兵', icon: '🏹', cost: 50, damage: 15, range: 3, speed: 0.8, color: '#44cc44', splash: 0, slow: 0, buff: 0,
-    desc: '基本的な遠距離攻撃ユニット' },
-  { name: '剣士', icon: '⚔️', cost: 80, damage: 35, range: 1.5, speed: 0.5, color: '#cc4444', splash: 0, slow: 0, buff: 0,
+// 味方ユニット定義
+const ALLY_DEFS = [
+  { name: '剣士', icon: '⚔️', damage: 20, range: 80, speed: 0.8, maxHp: 150, color: '#cc4444',
     desc: '近距離の高火力アタッカー' },
-  { name: '魔法使い', icon: '🔮', cost: 120, damage: 20, range: 3, speed: 1.2, color: '#8844ff', splash: 1.2, slow: 0.3, buff: 0,
-    desc: '範囲攻撃＋スロー効果' },
-  { name: '聖騎士', icon: '🛡️', cost: 200, damage: 25, range: 2, speed: 1.0, color: '#ffcc00', splash: 0, slow: 0, buff: 1.2,
-    desc: '周囲タワーの攻撃力1.2倍' },
-  { name: '陰陽師', icon: '🌙', cost: 300, damage: 50, range: 3.5, speed: 1.5, color: '#cc44ff', splash: 2.0, slow: 0.5, buff: 0,
-    desc: '最強の範囲魔法攻撃' },
+  { name: '弓兵', icon: '🏹', damage: 12, range: 200, speed: 1.0, maxHp: 80, color: '#44cc44',
+    desc: '遠距離の安定した攻撃' },
+  { name: '魔法使い', icon: '🔮', damage: 18, range: 180, speed: 1.5, maxHp: 70, color: '#8844ff',
+    desc: '範囲攻撃＋スロー効果', splash: 60, slow: 0.3 },
+  { name: '聖騎士', icon: '🛡️', damage: 15, range: 100, speed: 1.0, maxHp: 250, color: '#ffcc00',
+    desc: '高耐久の守護者' },
 ];
 
 // ===== ゲーム状態 =====
 let gold, lives, wave, score, gameSpeed;
-let towers, enemies, projectiles, particles;
-let selectedTowerType, selectedPlacedTower;
+let allies, enemies, projectiles, particles;
+let selectedAlly;
 let waveActive, spawning, spawnTimer, spawnQueue;
 let gameOver, victory;
 
@@ -422,23 +339,76 @@ function init() {
   wave = 0;
   score = 0;
   gameSpeed = 1;
-  towers = [];
+  allies = [];
   enemies = [];
   projectiles = [];
   particles = [];
-  selectedTowerType = -1;
-  selectedPlacedTower = null;
+  selectedAlly = null;
   waveActive = false;
   spawning = false;
   spawnTimer = 0;
   spawnQueue = [];
   gameOver = false;
   victory = false;
+
+  // 初期味方4人を配置（各レーンに1人）
+  for (let i = 0; i < LANE_COUNT; i++) {
+    const def = ALLY_DEFS[i];
+    const laneY = LANE_TOP + i * LANE_H + LANE_H / 2;
+    allies.push({
+      type: i,
+      name: def.name,
+      icon: def.icon,
+      x: GOAL_X,
+      y: laneY,
+      lane: i,
+      level: 1,
+      damage: def.damage,
+      range: def.range,
+      speed: def.speed,
+      maxHp: def.maxHp,
+      hp: def.maxHp,
+      color: def.color,
+      splash: def.splash || 0,
+      slow: def.slow || 0,
+      cooldown: 0,
+      totalSpent: 0,
+      angle: Math.PI, // 左を向く
+      attackAnim: 0,
+    });
+  }
+
   document.getElementById('game-over-overlay').style.display = 'none';
   document.getElementById('victory-overlay').style.display = 'none';
   document.getElementById('wave-btn').disabled = false;
+  buildAllyButtons();
   updateHUD();
-  updateTowerButtons();
+}
+
+// ===== UIボタン生成 =====
+function buildAllyButtons() {
+  const container = document.getElementById('ally-buttons');
+  container.innerHTML = '';
+  allies.forEach((a, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'ally-btn';
+    btn.onclick = () => selectAlly(i);
+    btn.innerHTML = `
+      <div class="ally-icon">${a.icon}</div>
+      <div class="ally-name">${a.name}</div>
+      <div class="ally-desc">${ALLY_DEFS[a.type].desc}</div>
+    `;
+    container.appendChild(btn);
+  });
+}
+
+function selectAlly(idx) {
+  selectedAlly = allies[idx] || null;
+  // ボタンハイライト
+  document.querySelectorAll('.ally-btn').forEach((btn, i) => {
+    btn.classList.toggle('selected', i === idx);
+  });
+  updateAllyInfo();
 }
 
 // ===== HUD更新 =====
@@ -450,57 +420,52 @@ function updateHUD() {
   document.getElementById('score').textContent = score;
 }
 
-function updateTowerButtons() {
-  const btns = document.querySelectorAll('.tower-btn');
-  btns.forEach((btn, i) => {
-    btn.classList.toggle('selected', i === selectedTowerType);
-    btn.classList.toggle('disabled', gold < TOWER_DEFS[i].cost);
-  });
-}
-
-function updateTowerInfo() {
-  const panel = document.getElementById('tower-info');
-  if (!selectedPlacedTower) {
+function updateAllyInfo() {
+  const panel = document.getElementById('ally-info');
+  if (!selectedAlly) {
     panel.style.display = 'none';
     return;
   }
-  const t = selectedPlacedTower;
-  const def = TOWER_DEFS[t.type];
+  const a = selectedAlly;
   panel.style.display = 'block';
-  document.getElementById('info-name').textContent = `${def.icon} ${def.name}`;
-  document.getElementById('info-level').textContent = t.level;
-  document.getElementById('info-damage').textContent = Math.round(t.damage);
-  document.getElementById('info-range').textContent = t.range.toFixed(1);
-  document.getElementById('info-speed').textContent = t.speed.toFixed(2) + 's';
+  document.getElementById('info-name').textContent = `${a.icon} ${a.name}`;
+  document.getElementById('info-level').textContent = a.level;
+  document.getElementById('info-damage').textContent = Math.round(a.damage);
+  document.getElementById('info-range').textContent = Math.round(a.range) + 'px';
+  document.getElementById('info-speed').textContent = a.speed.toFixed(2) + 's';
+  document.getElementById('info-hp').textContent = `${Math.round(a.hp)} / ${a.maxHp}`;
 
-  const upgCost = getUpgradeCost(t);
-  document.getElementById('upgrade-cost').textContent = upgCost;
-  document.getElementById('upgrade-btn').style.display = t.level >= 5 ? 'none' : 'block';
-  document.getElementById('upgrade-btn').disabled = gold < upgCost;
-
-  const sellVal = getSellValue(t);
-  document.getElementById('sell-value').textContent = sellVal;
+  const cost = getUpgradeCost(a);
+  document.getElementById('upgrade-cost').textContent = cost;
+  const btn = document.getElementById('upgrade-btn');
+  btn.style.display = a.level >= 10 ? 'none' : 'block';
+  btn.disabled = gold < cost;
 }
 
-function getUpgradeCost(t) {
-  return Math.floor(TOWER_DEFS[t.type].cost * (0.5 + t.level * 0.5));
+function getUpgradeCost(a) {
+  return Math.floor(30 + a.level * 20);
 }
 
-function getSellValue(t) {
-  return Math.floor(t.totalSpent * 0.6);
-}
-
-// ===== タワー選択/配置 =====
-function selectTower(idx) {
-  if (gold < TOWER_DEFS[idx].cost) return;
-  selectedPlacedTower = null;
-  updateTowerInfo();
-  if (selectedTowerType === idx) {
-    selectedTowerType = -1;
-  } else {
-    selectedTowerType = idx;
+function upgradeAlly() {
+  if (!selectedAlly || selectedAlly.level >= 10) return;
+  const cost = getUpgradeCost(selectedAlly);
+  if (gold < cost) return;
+  gold -= cost;
+  const a = selectedAlly;
+  a.level++;
+  a.damage *= 1.25;
+  a.range += 10;
+  a.speed *= 0.95;
+  a.maxHp += 20;
+  a.hp = Math.min(a.hp + 20, a.maxHp);
+  if (a.splash > 0) a.splash += 5;
+  if (a.slow > 0) a.slow = Math.min(a.slow + 0.03, 0.6);
+  a.totalSpent += cost;
+  updateHUD();
+  updateAllyInfo();
+  for (let i = 0; i < 8; i++) {
+    particles.push(createParticle(a.x, a.y, '#ffd700'));
   }
-  updateTowerButtons();
 }
 
 function setSpeed(s) {
@@ -510,109 +475,32 @@ function setSpeed(s) {
   });
 }
 
+// キャンバスクリックで味方選択
 canvas.addEventListener('click', (e) => {
   if (gameOver || victory) return;
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
-  const col = Math.floor(mx / TILE);
-  const row = Math.floor(my / TILE);
 
-  // タワー配置
-  if (selectedTowerType >= 0) {
-    if (canPlace(col, row)) {
-      placeTower(col, row, selectedTowerType);
+  // 味方をクリックで選択
+  let found = -1;
+  for (let i = 0; i < allies.length; i++) {
+    const a = allies[i];
+    const dx = mx - a.x;
+    const dy = my - a.y;
+    if (Math.sqrt(dx * dx + dy * dy) < 30) {
+      found = i;
+      break;
     }
-    return;
   }
-
-  // 既存タワー選択
-  const clicked = towers.find(t => t.col === col && t.row === row);
-  if (clicked) {
-    selectedPlacedTower = clicked;
-    selectedTowerType = -1;
-    updateTowerButtons();
-    updateTowerInfo();
+  if (found >= 0) {
+    selectAlly(found);
   } else {
-    selectedPlacedTower = null;
-    updateTowerInfo();
+    selectedAlly = null;
+    document.querySelectorAll('.ally-btn').forEach(btn => btn.classList.remove('selected'));
+    updateAllyInfo();
   }
 });
-
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  canvas._mx = e.clientX - rect.left;
-  canvas._my = e.clientY - rect.top;
-});
-
-function canPlace(col, row) {
-  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return false;
-  if (MAP[row][col] !== 0) return false;
-  if (towers.some(t => t.col === col && t.row === row)) return false;
-  return true;
-}
-
-function placeTower(col, row, type) {
-  const def = TOWER_DEFS[type];
-  if (gold < def.cost) return;
-  gold -= def.cost;
-  towers.push({
-    type, col, row,
-    x: col * TILE + TILE / 2,
-    y: row * TILE + TILE / 2,
-    level: 1,
-    damage: def.damage,
-    range: def.range,
-    speed: def.speed,
-    splash: def.splash,
-    slow: def.slow,
-    buff: def.buff,
-    cooldown: 0,
-    totalSpent: def.cost,
-    angle: 0,
-  });
-  selectedTowerType = -1;
-  updateHUD();
-  updateTowerButtons();
-  // パーティクル
-  for (let i = 0; i < 8; i++) {
-    particles.push(createParticle(col * TILE + TILE/2, row * TILE + TILE/2, def.color));
-  }
-}
-
-function upgradeTower() {
-  if (!selectedPlacedTower || selectedPlacedTower.level >= 5) return;
-  const cost = getUpgradeCost(selectedPlacedTower);
-  if (gold < cost) return;
-  gold -= cost;
-  const t = selectedPlacedTower;
-  t.level++;
-  t.damage *= 1.35;
-  t.range += 0.15;
-  t.speed *= 0.92;
-  if (t.splash > 0) t.splash += 0.1;
-  if (t.slow > 0) t.slow = Math.min(t.slow + 0.05, 0.7);
-  if (t.buff > 0) t.buff += 0.05;
-  t.totalSpent += cost;
-  updateHUD();
-  updateTowerButtons();
-  updateTowerInfo();
-  for (let i = 0; i < 6; i++) {
-    particles.push(createParticle(t.x, t.y, '#ffd700'));
-  }
-}
-
-function sellTower() {
-  if (!selectedPlacedTower) return;
-  const val = getSellValue(selectedPlacedTower);
-  gold += val;
-  const idx = towers.indexOf(selectedPlacedTower);
-  if (idx >= 0) towers.splice(idx, 1);
-  selectedPlacedTower = null;
-  updateHUD();
-  updateTowerButtons();
-  updateTowerInfo();
-}
 
 // ===== ウェーブ =====
 function startWave() {
@@ -622,8 +510,6 @@ function startWave() {
   spawning = true;
   spawnTimer = 0;
   document.getElementById('wave-btn').disabled = true;
-
-  // ウェーブ構成
   spawnQueue = generateWave(wave);
   updateHUD();
 }
@@ -640,28 +526,30 @@ function generateWave(w) {
     if (w >= 10 && Math.random() < 0.1 + w * 0.005) type = 'tank';
     if (w >= 15 && Math.random() < 0.05 + w * 0.003) type = 'healer';
 
-    queue.push(createEnemyDef(type, hpMult, speedMult));
+    const lane = Math.floor(Math.random() * LANE_COUNT);
+    queue.push(createEnemyDef(type, hpMult, speedMult, lane));
   }
 
   // ボスウェーブ (5の倍数)
   if (w % 5 === 0) {
-    queue.push(createEnemyDef('boss', hpMult * 3, speedMult * 0.6));
+    const lane = Math.floor(Math.random() * LANE_COUNT);
+    queue.push(createEnemyDef('boss', hpMult * 3, speedMult * 0.6, lane));
   }
 
   return queue;
 }
 
-function createEnemyDef(type, hpMult, speedMult) {
+function createEnemyDef(type, hpMult, speedMult, lane) {
   const defs = {
-    normal: { hp: 60, speed: 1.2, radius: 10, color: '#cc3333', gold: 5, score: 10, name: 'ゴブリン' },
-    fast:   { hp: 35, speed: 2.2, radius: 8, color: '#33cc33', gold: 8, score: 15, name: 'コボルト' },
-    tank:   { hp: 200, speed: 0.7, radius: 14, color: '#3366cc', gold: 15, score: 25, name: 'オーガ' },
-    healer: { hp: 80, speed: 1.0, radius: 10, color: '#cc33cc', gold: 12, score: 20, name: 'ダークプリースト' },
-    boss:   { hp: 500, speed: 0.5, radius: 18, color: '#ff6600', gold: 50, score: 100, name: 'ドラゴン' },
+    normal: { hp: 60, speed: 50, radius: 12, color: '#cc3333', gold: 5, score: 10, name: 'ゴブリン', emoji: '👹' },
+    fast:   { hp: 35, speed: 90, radius: 10, color: '#33cc33', gold: 8, score: 15, name: 'コボルト', emoji: '🐺' },
+    tank:   { hp: 200, speed: 30, radius: 16, color: '#3366cc', gold: 15, score: 25, name: 'オーガ', emoji: '👻' },
+    healer: { hp: 80, speed: 45, radius: 12, color: '#cc33cc', gold: 12, score: 20, name: 'ダークプリースト', emoji: '🧙' },
+    boss:   { hp: 500, speed: 25, radius: 22, color: '#ff6600', gold: 50, score: 100, name: 'ドラゴン', emoji: '🐲' },
   };
   const d = defs[type];
   return {
-    type,
+    type, lane,
     hp: Math.floor(d.hp * hpMult),
     maxHp: Math.floor(d.hp * hpMult),
     speed: d.speed * speedMult,
@@ -671,18 +559,24 @@ function createEnemyDef(type, hpMult, speedMult) {
     gold: d.gold,
     score: d.score,
     name: d.name,
+    emoji: d.emoji,
+    damage: type === 'boss' ? 3 : (type === 'tank' ? 2 : 1),
+    attackSpeed: type === 'fast' ? 0.8 : 1.2,
+    attackDamage: type === 'boss' ? 25 : (type === 'tank' ? 15 : 8),
   };
 }
 
 function spawnEnemy(def) {
-  const start = PATH[0];
+  const laneY = LANE_TOP + def.lane * LANE_H + LANE_H / 2;
   enemies.push({
     ...def,
-    x: start.x * TILE + TILE / 2,
-    y: start.y * TILE + TILE / 2,
-    pathIndex: 0,
+    x: SPAWN_X,
+    y: laneY + (Math.random() - 0.5) * 20,
     slowTimer: 0,
+    _slowAmount: 0,
     alive: true,
+    attackCooldown: 0,
+    targetAlly: null,
   });
 }
 
@@ -722,7 +616,7 @@ function update(dt) {
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       spawnEnemy(spawnQueue.shift());
-      spawnTimer = 0.6;
+      spawnTimer = 0.5;
     }
     if (spawnQueue.length === 0) spawning = false;
   }
@@ -731,10 +625,13 @@ function update(dt) {
   if (waveActive && !spawning && enemies.length === 0) {
     waveActive = false;
     document.getElementById('wave-btn').disabled = false;
-    // ウェーブクリアボーナス
     gold += 10 + wave * 2;
+    // ウェーブ間でHP少し回復
+    for (const a of allies) {
+      a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.2);
+    }
     updateHUD();
-    updateTowerButtons();
+    updateAllyInfo();
 
     if (wave >= MAX_WAVE) {
       victory = true;
@@ -743,49 +640,62 @@ function update(dt) {
     }
   }
 
-  // 敵移動
+  // 敵移動 & 戦闘
   for (const e of enemies) {
     if (!e.alive) continue;
 
     // スロー処理
     let spd = e.baseSpeed;
     if (e.slowTimer > 0) {
-      const slowAmt = e._slowAmount || 0.3;
-      spd *= (1 - slowAmt);
+      spd *= (1 - (e._slowAmount || 0.3));
       e.slowTimer -= dt;
     }
     e.speed = spd;
 
-    // 次のウェイポイントへ移動
-    if (e.pathIndex < PATH.length - 1) {
-      const next = PATH[e.pathIndex + 1];
-      const tx = next.x * TILE + TILE / 2;
-      const ty = next.y * TILE + TILE / 2;
-      const dx = tx - e.x;
-      const dy = ty - e.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const move = spd * TILE * dt;
+    // 同じレーンの味方を探す
+    const laneAlly = allies.find(a => a.lane === e.lane && a.hp > 0);
 
-      if (dist <= move) {
-        e.x = tx;
-        e.y = ty;
-        e.pathIndex++;
+    if (laneAlly) {
+      const distToAlly = laneAlly.x - e.x;
+      // 味方に近づいたら攻撃
+      if (distToAlly < 40) {
+        // 近接戦闘
+        e.attackCooldown -= dt;
+        if (e.attackCooldown <= 0) {
+          laneAlly.hp -= e.attackDamage;
+          e.attackCooldown = e.attackSpeed;
+          // 攻撃エフェクト
+          for (let i = 0; i < 3; i++) {
+            particles.push(createParticle(laneAlly.x - 15, laneAlly.y, '#ff4444'));
+          }
+          if (laneAlly.hp <= 0) {
+            laneAlly.hp = 0;
+            // 味方撃破エフェクト
+            for (let i = 0; i < 15; i++) {
+              particles.push(createParticle(laneAlly.x, laneAlly.y, laneAlly.color));
+            }
+          }
+          updateAllyInfo();
+        }
       } else {
-        e.x += (dx / dist) * move;
-        e.y += (dy / dist) * move;
+        // 右へ移動
+        e.x += spd * dt;
       }
-    }
+    } else {
+      // レーンに味方がいない → ゴールへ向かう
+      e.x += spd * dt;
 
-    // ゴール到達
-    if (e.pathIndex >= PATH.length - 1) {
-      e.alive = false;
-      lives--;
-      updateHUD();
-      if (lives <= 0) {
-        gameOver = true;
-        document.getElementById('final-wave').textContent = wave;
-        document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over-overlay').style.display = 'flex';
+      if (e.x >= CANVAS_W + 20) {
+        e.alive = false;
+        lives -= e.damage;
+        updateHUD();
+        if (lives <= 0) {
+          lives = 0;
+          gameOver = true;
+          document.getElementById('final-wave').textContent = wave;
+          document.getElementById('final-score').textContent = score;
+          document.getElementById('game-over-overlay').style.display = 'flex';
+        }
       }
     }
 
@@ -794,8 +704,8 @@ function update(dt) {
       for (const other of enemies) {
         if (other === e || !other.alive) continue;
         const hd = Math.sqrt((other.x - e.x) ** 2 + (other.y - e.y) ** 2);
-        if (hd < TILE * 2) {
-          other.hp = Math.min(other.maxHp, other.hp + 10 * dt);
+        if (hd < 100) {
+          other.hp = Math.min(other.maxHp, other.hp + 15 * dt);
         }
       }
     }
@@ -804,56 +714,42 @@ function update(dt) {
   // 死んだ敵除去
   enemies = enemies.filter(e => e.alive);
 
-  // バフ計算
-  const buffMap = new Map();
-  for (const t of towers) {
-    if (t.buff > 0) {
-      for (const other of towers) {
-        if (other === t) continue;
-        const d = Math.sqrt((other.x - t.x) ** 2 + (other.y - t.y) ** 2);
-        if (d < t.range * TILE + TILE) {
-          const cur = buffMap.get(other) || 1;
-          buffMap.set(other, Math.max(cur, t.buff));
-        }
-      }
-    }
-  }
+  // 味方攻撃
+  for (const a of allies) {
+    if (a.hp <= 0) continue;
+    a.cooldown -= dt;
+    if (a.attackAnim > 0) a.attackAnim -= dt;
+    if (a.cooldown > 0) continue;
 
-  // タワー攻撃
-  for (const t of towers) {
-    t.cooldown -= dt;
-    if (t.cooldown > 0) continue;
-
-    // ターゲット探索
+    // ターゲット探索（射程内で最も近い敵）
     let target = null;
-    let bestProgress = -1;
-    const rangePx = t.range * TILE + TILE / 2;
+    let bestDist = Infinity;
 
     for (const e of enemies) {
       if (!e.alive) continue;
-      const d = Math.sqrt((e.x - t.x) ** 2 + (e.y - t.y) ** 2);
-      if (d <= rangePx && e.pathIndex > bestProgress) {
-        bestProgress = e.pathIndex;
+      const dx = e.x - a.x;
+      const dy = e.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= a.range && dist < bestDist) {
+        bestDist = dist;
         target = e;
       }
     }
 
     if (target) {
-      t.cooldown = t.speed;
-      t.angle = Math.atan2(target.y - t.y, target.x - t.x);
-
-      const buffMult = buffMap.get(t) || 1;
-      const dmg = t.damage * buffMult;
+      a.cooldown = a.speed;
+      a.angle = Math.atan2(target.y - a.y, target.x - a.x);
+      a.attackAnim = 0.15;
 
       projectiles.push({
-        x: t.x, y: t.y,
+        x: a.x, y: a.y,
         tx: target.x, ty: target.y,
         target,
-        damage: dmg,
-        splash: t.splash,
-        slow: t.slow,
-        speed: 6 * TILE,
-        color: TOWER_DEFS[t.type].color,
+        damage: a.damage,
+        splash: a.splash || 0,
+        slow: a.slow || 0,
+        speed: 400,
+        color: a.color,
         alive: true,
       });
     }
@@ -862,7 +758,6 @@ function update(dt) {
   // 弾移動
   for (const p of projectiles) {
     if (!p.alive) continue;
-    // ターゲット追尾
     if (p.target && p.target.alive) {
       p.tx = p.target.x;
       p.ty = p.target.y;
@@ -873,22 +768,20 @@ function update(dt) {
     const move = p.speed * dt;
 
     if (dist <= move) {
-      // ヒット
       p.alive = false;
       if (p.splash > 0) {
-        const splashPx = p.splash * TILE;
         for (const e of enemies) {
           if (!e.alive) continue;
           const sd = Math.sqrt((e.x - p.tx) ** 2 + (e.y - p.ty) ** 2);
-          if (sd <= splashPx) {
-            dealDamage(e, p.damage * (1 - sd / splashPx * 0.5));
+          if (sd <= p.splash) {
+            dealDamage(e, p.damage * (1 - sd / p.splash * 0.5));
             if (p.slow > 0) {
               e.slowTimer = 1.5;
               e._slowAmount = p.slow;
             }
           }
         }
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 8; i++) {
           particles.push(createParticle(p.tx, p.ty, p.color));
         }
       } else {
@@ -927,9 +820,7 @@ function dealDamage(enemy, dmg) {
     gold += enemy.gold;
     score += enemy.score;
     updateHUD();
-    updateTowerButtons();
-    if (selectedPlacedTower) updateTowerInfo();
-    // 撃破エフェクト
+    updateAllyInfo();
     for (let i = 0; i < 12; i++) {
       particles.push(createParticle(enemy.x, enemy.y, enemy.color));
     }
@@ -938,68 +829,80 @@ function dealDamage(enemy, dmg) {
 
 // ===== 描画 =====
 function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // 背景タイル
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const x = c * TILE;
-      const y = r * TILE;
-      if (MAP[r][c] === 1) {
-        ctx.fillStyle = '#5a4a3a';
-        ctx.fillRect(x, y, TILE, TILE);
-        ctx.strokeStyle = '#4a3a2a';
-        ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
-      } else {
-        ctx.fillStyle = (r + c) % 2 === 0 ? '#2a4a2a' : '#254525';
-        ctx.fillRect(x, y, TILE, TILE);
-      }
-    }
-  }
+  // 空（グラデーション）
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, LANE_TOP);
+  skyGrad.addColorStop(0, '#87CEEB');
+  skyGrad.addColorStop(1, '#B0E0E6');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, CANVAS_W, LANE_TOP);
 
-  // 経路のスタート/ゴール
-  ctx.fillStyle = '#44aaff';
-  ctx.fillRect(PATH[0].x * TILE, PATH[0].y * TILE, TILE, TILE);
-  ctx.fillStyle = '#fff';
-  ctx.font = '12px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('START', PATH[0].x * TILE + TILE/2, PATH[0].y * TILE + TILE/2 + 4);
+  // 太陽
+  ctx.beginPath();
+  ctx.arc(650, 35, 25, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFD700';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(650, 35, 30, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.lineWidth = 1;
 
-  const last = PATH[PATH.length - 1];
-  ctx.fillStyle = '#ff4444';
-  ctx.fillRect(last.x * TILE, last.y * TILE, TILE, TILE);
-  ctx.fillStyle = '#fff';
-  ctx.fillText('GOAL', last.x * TILE + TILE/2, last.y * TILE + TILE/2 + 4);
+  // 雲
+  drawCloud(100, 25, 40);
+  drawCloud(300, 40, 30);
+  drawCloud(500, 20, 35);
 
-  // 配置プレビュー
-  if (selectedTowerType >= 0) {
-    const mx = canvas._mx || 0;
-    const my = canvas._my || 0;
-    const col = Math.floor(mx / TILE);
-    const row = Math.floor(my / TILE);
-    const ok = canPlace(col, row);
+  // 草原の背景
+  const grassGrad = ctx.createLinearGradient(0, LANE_TOP, 0, CANVAS_H);
+  grassGrad.addColorStop(0, '#4CAF50');
+  grassGrad.addColorStop(1, '#388E3C');
+  ctx.fillStyle = grassGrad;
+  ctx.fillRect(0, LANE_TOP, CANVAS_W, CANVAS_H - LANE_TOP);
 
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = ok ? '#00ff00' : '#ff0000';
-    ctx.fillRect(col * TILE, row * TILE, TILE, TILE);
+  // レーン描画
+  for (let i = 0; i < LANE_COUNT; i++) {
+    const y = LANE_TOP + i * LANE_H;
 
-    if (ok) {
-      const rangePx = TOWER_DEFS[selectedTowerType].range * TILE + TILE / 2;
-      ctx.beginPath();
-      ctx.arc(col * TILE + TILE/2, row * TILE + TILE/2, rangePx, 0, Math.PI * 2);
-      ctx.strokeStyle = '#00ff00';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-  }
+    // レーン背景（道）
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(139, 119, 80, 0.3)' : 'rgba(139, 119, 80, 0.2)';
+    ctx.fillRect(0, y + 15, CANVAS_W, LANE_H - 30);
 
-  // 選択タワーの射程
-  if (selectedPlacedTower) {
-    const t = selectedPlacedTower;
-    const rangePx = t.range * TILE + TILE / 2;
+    // レーン区切り線
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.setLineDash([10, 10]);
     ctx.beginPath();
-    ctx.arc(t.x, t.y, rangePx, 0, Math.PI * 2);
+    ctx.moveTo(0, y + LANE_H);
+    ctx.lineTo(CANVAS_W, y + LANE_H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 草の装飾
+    for (let gx = 20; gx < CANVAS_W; gx += 60) {
+      const gy = y + LANE_H - 8 + Math.sin(gx * 0.1 + i) * 3;
+      ctx.fillStyle = '#66BB6A';
+      ctx.fillText('🌿', gx, gy);
+    }
+  }
+
+  // 防衛ライン
+  ctx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath();
+  ctx.moveTo(GOAL_X + 30, LANE_TOP);
+  ctx.lineTo(GOAL_X + 30, CANVAS_H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.lineWidth = 1;
+
+  // 味方射程（選択時）
+  if (selectedAlly && selectedAlly.hp > 0) {
+    const a = selectedAlly;
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.range, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -1008,44 +911,17 @@ function render() {
     ctx.lineWidth = 1;
   }
 
-  // タワー描画
-  for (const t of towers) {
-    const def = TOWER_DEFS[t.type];
-    // 台座
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(t.col * TILE + 4, t.row * TILE + 4, TILE - 8, TILE - 8);
-    ctx.fillStyle = def.color;
-    ctx.fillRect(t.col * TILE + 6, t.row * TILE + 6, TILE - 12, TILE - 12);
-
-    // アイコン
-    ctx.font = '22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, t.x, t.y);
-
-    // レベル表示
-    if (t.level > 1) {
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = '#ffd700';
-      ctx.fillText('★' + t.level, t.x, t.y - 16);
-    }
-
-    // バフリング
-    if (t.buff > 0) {
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, t.range * TILE + TILE / 2, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 204, 0, 0.2)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.lineWidth = 1;
-    }
-  }
-
   // 敵描画
   for (const e of enemies) {
     if (!e.alive) continue;
 
-    // 本体
+    // 影
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y + e.radius + 2, e.radius * 0.8, 4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fill();
+
+    // 本体（円）
     ctx.beginPath();
     ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
     ctx.fillStyle = e.color;
@@ -1054,6 +930,12 @@ function render() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.lineWidth = 1;
+
+    // 絵文字
+    ctx.font = `${e.radius * 1.4}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(e.emoji, e.x, e.y);
 
     // スロー表示
     if (e.slowTimer > 0) {
@@ -1069,7 +951,7 @@ function render() {
     const barW = e.radius * 2.5;
     const barH = 4;
     const barX = e.x - barW / 2;
-    const barY = e.y - e.radius - 8;
+    const barY = e.y - e.radius - 10;
     ctx.fillStyle = '#333';
     ctx.fillRect(barX, barY, barW, barH);
     const ratio = Math.max(0, e.hp / e.maxHp);
@@ -1081,7 +963,85 @@ function render() {
       ctx.font = 'bold 10px sans-serif';
       ctx.fillStyle = '#ff8800';
       ctx.textAlign = 'center';
-      ctx.fillText(e.name, e.x, e.y - e.radius - 12);
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(e.name, e.x, e.y - e.radius - 14);
+    }
+  }
+
+  // 味方描画
+  for (const a of allies) {
+    // 影
+    ctx.beginPath();
+    ctx.ellipse(a.x, a.y + 22, 16, 5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fill();
+
+    if (a.hp <= 0) {
+      // 倒れた味方
+      ctx.globalAlpha = 0.3;
+      ctx.font = '30px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.icon, a.x, a.y);
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = '#ff4444';
+      ctx.fillText('💀', a.x, a.y - 20);
+      ctx.globalAlpha = 1;
+      continue;
+    }
+
+    // 攻撃アニメーション（ちょっと前に出る）
+    let drawX = a.x;
+    if (a.attackAnim > 0) {
+      drawX -= 8 * (a.attackAnim / 0.15);
+    }
+
+    // 本体（丸い台座）
+    ctx.beginPath();
+    ctx.arc(drawX, a.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = a.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+
+    // アイコン
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(a.icon, drawX, a.y);
+
+    // レベル表示
+    if (a.level > 1) {
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText('★' + a.level, drawX, a.y - 24);
+    }
+
+    // HPバー
+    const barW = 40;
+    const barH = 5;
+    const barX = drawX - barW / 2;
+    const barY = a.y + 26;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(barX, barY, barW, barH);
+    const hpRatio = a.hp / a.maxHp;
+    ctx.fillStyle = hpRatio > 0.5 ? '#44cc44' : hpRatio > 0.25 ? '#cccc44' : '#cc4444';
+    ctx.fillRect(barX, barY, barW * hpRatio, barH);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    // 選択ハイライト
+    if (selectedAlly === a) {
+      ctx.beginPath();
+      ctx.arc(drawX, a.y, 24, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
     }
   }
 
@@ -1089,18 +1049,21 @@ function render() {
   for (const p of projectiles) {
     if (!p.alive) continue;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
     // 軌跡
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
     const dx = p.tx - p.x;
     const dy = p.ty - p.y;
     const d = Math.sqrt(dx*dx + dy*dy) || 1;
-    ctx.lineTo(p.x - (dx/d)*8, p.y - (dy/d)*8);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x - (dx/d)*10, p.y - (dy/d)*10);
     ctx.strokeStyle = p.color;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.4;
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.globalAlpha = 1;
@@ -1114,6 +1077,27 @@ function render() {
     ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
   }
   ctx.globalAlpha = 1;
+
+  // ステータスバー（下部）
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, CANVAS_H - 25, CANVAS_W, 25);
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const aliveAllies = allies.filter(a => a.hp > 0).length;
+  const aliveEnemies = enemies.filter(e => e.alive).length;
+  ctx.fillText(`味方: ${aliveAllies}/${LANE_COUNT}  |  敵: ${aliveEnemies}体  |  残ライフ: ${lives}`, 10, CANVAS_H - 12);
+}
+
+function drawCloud(x, y, size) {
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.4, y - size * 0.15, size * 0.4, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.8, y, size * 0.45, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.4, y + size * 0.1, size * 0.35, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function restartGame() {
