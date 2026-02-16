@@ -248,11 +248,152 @@ canvas {
 #restart-btn:hover, #restart-btn2:hover {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
+
+/* タイトル画面 */
+#title-screen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 960px; height: 640px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0a1a0a, #1a3a1a);
+  overflow: hidden;
+}
+
+#title-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.title-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.title-content h1 {
+  font-size: 52px;
+  background: linear-gradient(180deg, #ffd700, #ff8c00, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
+  letter-spacing: 4px;
+  animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  from { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3)); }
+  to   { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6)); }
+}
+
+.title-subtitle {
+  font-size: 18px;
+  color: #a0d0a0;
+  letter-spacing: 6px;
+  margin-top: -10px;
+}
+
+.title-allies {
+  display: flex;
+  gap: 30px;
+  margin: 20px 0;
+  font-size: 48px;
+  animation: titleFloat 3s ease-in-out infinite;
+}
+
+@keyframes titleFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+.title-ally-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.title-ally-unit span {
+  font-size: 12px;
+  color: #c0e0c0;
+}
+
+#start-btn {
+  padding: 16px 60px;
+  background: linear-gradient(180deg, #cc6600, #994400);
+  border: 3px solid #ff8800;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 4px;
+  transition: all 0.3s;
+  animation: startPulse 1.5s ease-in-out infinite;
+  margin-top: 10px;
+}
+
+@keyframes startPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 136, 0, 0.3); }
+  50%      { box-shadow: 0 0 30px rgba(255, 136, 0, 0.7); }
+}
+
+#start-btn:hover {
+  background: linear-gradient(180deg, #ee7700, #bb5500);
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(255, 136, 0, 0.8);
+}
+
+.title-howto {
+  margin-top: 10px;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(74, 138, 42, 0.5);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #90c090;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.title-howto strong {
+  color: #ffd700;
+}
 </style>
 </head>
 <body>
 
-<div id="game-header">
+<div id="title-screen">
+  <canvas id="title-canvas" width="960" height="640"></canvas>
+  <div class="title-content">
+    <h1>伝説のまもりびと</h1>
+    <div class="title-subtitle">- TOWER DEFENSE -</div>
+    <div class="title-allies">
+      <div class="title-ally-unit"><div>⚔️</div><span>剣士</span></div>
+      <div class="title-ally-unit"><div>🏹</div><span>弓兵</span></div>
+      <div class="title-ally-unit"><div>🔮</div><span>魔法使い</span></div>
+      <div class="title-ally-unit"><div>🛡️</div><span>聖騎士</span></div>
+    </div>
+    <button id="start-btn" onclick="startGame()">ゲーム開始</button>
+    <div class="title-howto">
+      <strong>遊び方</strong><br>
+      左から迫る敵を4人の味方で迎え撃て！<br>
+      敵を倒してゴールドを稼ぎ、<strong>味方を強化</strong>しよう<br>
+      全30ウェーブを生き残れば勝利！
+    </div>
+  </div>
+</div>
+
+<div id="game-header" style="display:none;">
   <h1>伝説のまもりびと</h1>
   <div class="hud-info">
     <span><span class="gold-icon">&#x2B50;</span> <span id="gold">100</span>G</span>
@@ -266,7 +407,7 @@ canvas {
   </div>
 </div>
 
-<div id="game-container">
+<div id="game-container" style="display:none;">
   <canvas id="gameCanvas" width="760" height="600"></canvas>
   <div id="side-panel">
     <h3>味方ユニット</h3>
@@ -290,6 +431,7 @@ canvas {
     <p>Wave <span id="final-wave">0</span> まで到達</p>
     <p>スコア: <span id="final-score">0</span></p>
     <button id="restart-btn" onclick="restartGame()">もう一度挑戦</button>
+    <button id="restart-btn" onclick="backToTitle()" style="margin-top:10px;background:linear-gradient(180deg,#2d4a1e,#1a2a1a);border-color:#4a8a2a;">タイトルへ戻る</button>
   </div>
 
   <div id="victory-overlay">
@@ -297,10 +439,118 @@ canvas {
     <p>全Waveを制覇！</p>
     <p>スコア: <span id="final-score2">0</span></p>
     <button id="restart-btn2" onclick="restartGame()">もう一度挑戦</button>
+    <button id="restart-btn2" onclick="backToTitle()" style="margin-top:10px;background:linear-gradient(180deg,#2d4a1e,#1a2a1a);border-color:#4a8a2a;">タイトルへ戻る</button>
   </div>
 </div>
 
 <script>
+// ===== タイトル画面 =====
+const titleCanvas = document.getElementById('title-canvas');
+const titleCtx = titleCanvas.getContext('2d');
+let titleParticles = [];
+let titleEnemies = [];
+let titleAnimId = null;
+
+function initTitle() {
+  // タイトル画面の背景パーティクル（星）
+  for (let i = 0; i < 60; i++) {
+    titleParticles.push({
+      x: Math.random() * 960,
+      y: Math.random() * 640,
+      size: 1 + Math.random() * 2,
+      speed: 0.2 + Math.random() * 0.5,
+      alpha: 0.3 + Math.random() * 0.7,
+      twinkle: Math.random() * Math.PI * 2,
+    });
+  }
+  // タイトル画面を横切る敵のシルエット
+  for (let i = 0; i < 6; i++) {
+    const emojis = ['👹', '🐺', '👻', '🧙', '🐲'];
+    titleEnemies.push({
+      x: -60 - Math.random() * 400,
+      y: 200 + Math.random() * 350,
+      speed: 15 + Math.random() * 30,
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+      size: 20 + Math.random() * 20,
+      alpha: 0.15 + Math.random() * 0.2,
+    });
+  }
+  titleAnimLoop();
+}
+
+function titleAnimLoop() {
+  titleCtx.clearRect(0, 0, 960, 640);
+
+  // 背景グラデーション
+  const grad = titleCtx.createLinearGradient(0, 0, 0, 640);
+  grad.addColorStop(0, '#0a1a0a');
+  grad.addColorStop(0.4, '#102010');
+  grad.addColorStop(1, '#1a3a1a');
+  titleCtx.fillStyle = grad;
+  titleCtx.fillRect(0, 0, 960, 640);
+
+  // 地面
+  const groundGrad = titleCtx.createLinearGradient(0, 480, 0, 640);
+  groundGrad.addColorStop(0, '#2a5a2a');
+  groundGrad.addColorStop(1, '#1a3a1a');
+  titleCtx.fillStyle = groundGrad;
+  titleCtx.fillRect(0, 480, 960, 160);
+
+  // 草のライン
+  titleCtx.strokeStyle = '#3a6a3a';
+  titleCtx.lineWidth = 1;
+  for (let x = 0; x < 960; x += 20) {
+    const h = 5 + Math.sin(x * 0.05 + Date.now() * 0.001) * 3;
+    titleCtx.beginPath();
+    titleCtx.moveTo(x, 480);
+    titleCtx.lineTo(x + 5, 480 - h);
+    titleCtx.stroke();
+  }
+
+  // 星パーティクル
+  for (const p of titleParticles) {
+    p.twinkle += 0.02;
+    const alpha = p.alpha * (0.5 + 0.5 * Math.sin(p.twinkle));
+    titleCtx.globalAlpha = alpha;
+    titleCtx.fillStyle = '#ffffcc';
+    titleCtx.beginPath();
+    titleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    titleCtx.fill();
+  }
+  titleCtx.globalAlpha = 1;
+
+  // 敵のシルエット（左→右）
+  for (const e of titleEnemies) {
+    e.x += e.speed * 0.016;
+    if (e.x > 1020) {
+      e.x = -60 - Math.random() * 200;
+      e.y = 200 + Math.random() * 350;
+    }
+    titleCtx.globalAlpha = e.alpha;
+    titleCtx.font = `${e.size}px sans-serif`;
+    titleCtx.textAlign = 'center';
+    titleCtx.textBaseline = 'middle';
+    titleCtx.fillText(e.emoji, e.x, e.y);
+  }
+  titleCtx.globalAlpha = 1;
+
+  titleAnimId = requestAnimationFrame(titleAnimLoop);
+}
+
+function startGame() {
+  // タイトル画面を非表示
+  if (titleAnimId) cancelAnimationFrame(titleAnimId);
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-header').style.display = 'flex';
+  document.getElementById('game-container').style.display = 'flex';
+
+  // ゲーム初期化＆開始
+  init();
+  requestAnimationFrame(gameLoop);
+}
+
+initTitle();
+
 // ===== ゲーム定数 =====
 const CANVAS_W = 760;
 const CANVAS_H = 600;
@@ -1104,9 +1354,18 @@ function restartGame() {
   init();
 }
 
+function backToTitle() {
+  gameOver = true; // ループ停止
+  document.getElementById('game-header').style.display = 'none';
+  document.getElementById('game-container').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'flex';
+  titleParticles = [];
+  titleEnemies = [];
+  initTitle();
+}
+
 // ===== 開始 =====
-init();
-requestAnimationFrame(gameLoop);
+// タイトル画面から startGame() で開始
 </script>
 </body>
 </html>
