@@ -678,20 +678,18 @@ function generateWave(w) {
     if (w >= 10 && Math.random() < 0.1 + w * 0.005) type = 'tank';
     if (w >= 15 && Math.random() < 0.05 + w * 0.003) type = 'healer';
 
-    const lane = Math.floor(Math.random() * LANE_COUNT);
-    queue.push(createEnemyDef(type, hpMult, speedMult, lane));
+    queue.push(createEnemyDef(type, hpMult, speedMult));
   }
 
   // ボスウェーブ (5の倍数)
   if (w % 5 === 0) {
-    const lane = Math.floor(Math.random() * LANE_COUNT);
-    queue.push(createEnemyDef('boss', hpMult * 3, speedMult * 0.6, lane));
+    queue.push(createEnemyDef('boss', hpMult * 3, speedMult * 0.6));
   }
 
   return queue;
 }
 
-function createEnemyDef(type, hpMult, speedMult, lane) {
+function createEnemyDef(type, hpMult, speedMult) {
   const defs = {
     normal: { hp: 60, speed: 50, radius: 12, color: '#cc3333', gold: 5, score: 10, name: 'ゴブリン', emoji: '👹' },
     fast:   { hp: 35, speed: 90, radius: 10, color: '#33cc33', gold: 8, score: 15, name: 'コボルト', emoji: '🐺' },
@@ -701,7 +699,7 @@ function createEnemyDef(type, hpMult, speedMult, lane) {
   };
   const d = defs[type];
   return {
-    type, lane,
+    type,
     hp: Math.floor(d.hp * hpMult),
     maxHp: Math.floor(d.hp * hpMult),
     speed: d.speed * speedMult,
@@ -719,11 +717,12 @@ function createEnemyDef(type, hpMult, speedMult, lane) {
 }
 
 function spawnEnemy(def) {
-  const laneY = LANE_TOP + def.lane * LANE_H + LANE_H / 2;
+  // 中央付近にランダムにばらけて出現
+  const centerY = CORE_Y;
   enemies.push({
     ...def,
     x: SPAWN_X,
-    y: laneY + (Math.random() - 0.5) * 20,
+    y: centerY + (Math.random() - 0.5) * 80,
     slowTimer: 0,
     _slowAmount: 0,
     alive: true,
@@ -989,29 +988,28 @@ function render() {
   ctx.fillStyle = grassGrad;
   ctx.fillRect(0, LANE_TOP, CANVAS_W, CANVAS_H - LANE_TOP);
 
-  // レーン描画
-  for (let i = 0; i < LANE_COUNT; i++) {
-    const y = LANE_TOP + i * LANE_H;
-
-    // レーン背景（道）
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(139, 119, 80, 0.3)' : 'rgba(139, 119, 80, 0.2)';
-    ctx.fillRect(0, y + 15, CANVAS_W, LANE_H - 30);
-
-    // レーン区切り線
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.setLineDash([10, 10]);
-    ctx.beginPath();
-    ctx.moveTo(0, y + LANE_H);
-    ctx.lineTo(CANVAS_W, y + LANE_H);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 草の装飾
-    for (let gx = 20; gx < CANVAS_W; gx += 60) {
-      const gy = y + LANE_H - 8 + Math.sin(gx * 0.1 + i) * 3;
-      ctx.fillStyle = '#66BB6A';
-      ctx.fillText('🌿', gx, gy);
-    }
+  // 中央の道を描画
+  const pathY = CORE_Y - 50;
+  const pathH = 100;
+  ctx.fillStyle = 'rgba(139, 119, 80, 0.3)';
+  ctx.fillRect(0, pathY, CANVAS_W, pathH);
+  // 道の縁線
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.setLineDash([10, 10]);
+  ctx.beginPath();
+  ctx.moveTo(0, pathY);
+  ctx.lineTo(CANVAS_W, pathY);
+  ctx.moveTo(0, pathY + pathH);
+  ctx.lineTo(CANVAS_W, pathY + pathH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 草の装飾
+  for (let gx = 20; gx < CANVAS_W; gx += 60) {
+    const gy1 = pathY - 5 + Math.sin(gx * 0.1) * 3;
+    const gy2 = pathY + pathH + 5 + Math.sin(gx * 0.1 + 2) * 3;
+    ctx.fillStyle = '#66BB6A';
+    ctx.fillText('🌿', gx, gy1);
+    ctx.fillText('🌿', gx, gy2);
   }
 
   // コア描画
@@ -1262,6 +1260,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.4.0</div>
+<div id="version-label">v0.4.1</div>
 </body>
 </html>
