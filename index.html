@@ -479,6 +479,134 @@ canvas {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
 
+/* モバイル対応 */
+@media (max-width: 959px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  #menu-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 40px 0;
+  }
+
+  #menu-screen h1 {
+    font-size: 36px;
+    margin-bottom: 40px;
+  }
+
+  #menu-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #formation-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 24px 0;
+  }
+
+  .formation-slot {
+    width: 160px;
+    padding: 12px;
+  }
+
+  .job-pick-btn {
+    width: 85px;
+    padding: 8px 4px;
+  }
+
+  .job-pick-btn .pick-icon {
+    font-size: 22px;
+  }
+
+  .job-pick-btn .pick-name {
+    font-size: 11px;
+  }
+
+  #game-header {
+    width: 760px;
+  }
+
+  #game-header h1 {
+    display: none;
+  }
+
+  .hud-info {
+    gap: 10px;
+    font-size: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  #game-container {
+    flex-direction: column;
+  }
+
+  canvas {
+    border-right: 2px solid #4a8a2a;
+  }
+
+  #side-panel {
+    width: 760px;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  #side-panel h3 {
+    width: 100%;
+  }
+
+  #ally-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .ally-btn {
+    flex-direction: row;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .ally-btn .ally-icon {
+    font-size: 22px;
+    margin-bottom: 0;
+  }
+
+  .ally-btn .ally-desc {
+    display: none;
+  }
+
+  #ally-info {
+    width: 100%;
+  }
+
+  #wave-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  #game-over-overlay, #victory-overlay {
+    width: 760px;
+    height: 600px;
+  }
+}
+
 #version-label {
   position: fixed;
   right: 8px;
@@ -1377,6 +1505,7 @@ function startSortie() {
   init();
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);
+  setTimeout(fitToScreen, 0);
 }
 
 // ===== 編成画面 =====
@@ -1387,11 +1516,13 @@ function openFormation() {
   document.getElementById('formation-screen').style.display = 'flex';
   editingSlot = -1;
   renderFormation();
+  setTimeout(fitToScreen, 0);
 }
 
 function closeFormation() {
   document.getElementById('formation-screen').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
+  setTimeout(fitToScreen, 0);
 }
 
 function renderFormation() {
@@ -1454,26 +1585,39 @@ function returnToMenu() {
   document.getElementById('game-header').style.display = 'none';
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
+  setTimeout(fitToScreen, 0);
 }
 
 // ===== 画面フィット =====
 function fitToScreen() {
   const wrapper = document.getElementById('app-wrapper');
-  const contentW = 960;
-  const contentH = 640;
+  const isMobile = window.innerWidth < 960;
+  const contentW = isMobile ? 760 : 960;
   const scaleX = window.innerWidth / contentW;
-  const scaleY = window.innerHeight / contentH;
-  const s = Math.min(scaleX, scaleY, 1);
-  wrapper.style.transform = 'scale(' + s + ')';
-  // scale後のレイアウト補正（transform はレイアウトサイズを変えないため）
-  const scaledH = contentH * s;
-  wrapper.style.marginBottom = -(contentH - scaledH) + 'px';
-  wrapper.style.marginTop = Math.max(0, (window.innerHeight - scaledH) / 2) + 'px';
+
+  if (isMobile) {
+    const s = scaleX;
+    wrapper.style.transform = 'scale(' + s + ')';
+    wrapper.style.transformOrigin = 'top center';
+    wrapper.style.marginTop = '0';
+    // scrollHeightからレイアウト補正
+    const actualH = wrapper.scrollHeight;
+    wrapper.style.marginBottom = -(actualH - actualH * s) + 'px';
+  } else {
+    const contentH = 640;
+    const scaleY = window.innerHeight / contentH;
+    const s = Math.min(scaleX, scaleY, 1);
+    wrapper.style.transform = 'scale(' + s + ')';
+    wrapper.style.transformOrigin = 'top center';
+    const scaledH = contentH * s;
+    wrapper.style.marginBottom = -(contentH - scaledH) + 'px';
+    wrapper.style.marginTop = Math.max(0, (window.innerHeight - scaledH) / 2) + 'px';
+  }
 }
 
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.5.1</div>
+<div id="version-label">v0.5.2</div>
 </body>
 </html>
