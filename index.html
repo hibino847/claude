@@ -234,7 +234,7 @@ canvas {
   margin-bottom: 30px;
 }
 
-#restart-btn, #restart-btn2 {
+#restart-btn, #restart-btn2, #menu-btn, #menu-btn2 {
   padding: 12px 40px;
   background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
   border: 2px solid #6aaa3a;
@@ -245,14 +245,132 @@ canvas {
   font-family: inherit;
 }
 
-#restart-btn:hover, #restart-btn2:hover {
+#restart-btn:hover, #restart-btn2:hover, #menu-btn:hover, #menu-btn2:hover {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
+/* メニュー画面 */
+#menu-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #1a3a10, #0d1a0d);
+  border: 2px solid #4a8a2a;
+}
+
+#menu-screen h1 {
+  font-size: 48px;
+  background: linear-gradient(90deg, #ffd700, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 60px;
+  text-shadow: none;
+}
+
+#menu-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 100px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  border: 2px solid;
+  transition: all 0.2s;
+}
+
+.menu-btn .menu-btn-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.menu-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.menu-btn.btn-sortie {
+  background: linear-gradient(180deg, #aa4400, #883300);
+  border-color: #ff8800;
+}
+
+.menu-btn.btn-sortie:hover {
+  background: linear-gradient(180deg, #cc5500, #aa4400);
+  box-shadow: 0 0 20px rgba(255, 136, 0, 0.4);
+}
+
+.menu-btn.btn-formation {
+  background: linear-gradient(180deg, #2a5a8a, #1a3a5a);
+  border-color: #4a9aee;
+}
+
+.menu-btn.btn-formation:hover {
+  background: linear-gradient(180deg, #3a6a9a, #2a5a8a);
+  box-shadow: 0 0 20px rgba(74, 154, 238, 0.4);
+}
+
+.menu-btn.btn-enhance {
+  background: linear-gradient(180deg, #6a2a8a, #4a1a5a);
+  border-color: #aa5aee;
+}
+
+.menu-btn.btn-enhance:hover {
+  background: linear-gradient(180deg, #7a3a9a, #6a2a8a);
+  box-shadow: 0 0 20px rgba(170, 90, 238, 0.4);
+}
+
+.menu-btn.btn-jobchange {
+  background: linear-gradient(180deg, #2a7a3a, #1a5a2a);
+  border-color: #4aea5a;
+}
+
+.menu-btn.btn-jobchange:hover {
+  background: linear-gradient(180deg, #3a8a4a, #2a7a3a);
+  box-shadow: 0 0 20px rgba(74, 234, 90, 0.4);
+}
+
+.menu-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 </style>
 </head>
 <body>
 
-<div id="game-header">
+<div id="menu-screen">
+  <h1>伝説のまもりびと</h1>
+  <div id="menu-buttons">
+    <button class="menu-btn btn-sortie" onclick="startSortie()">
+      <span class="menu-btn-icon">⚔️</span>出動
+    </button>
+    <button class="menu-btn btn-formation" disabled>
+      <span class="menu-btn-icon">📋</span>編成
+    </button>
+    <button class="menu-btn btn-enhance" disabled>
+      <span class="menu-btn-icon">💎</span>強化
+    </button>
+    <button class="menu-btn btn-jobchange" disabled>
+      <span class="menu-btn-icon">🔄</span>転職
+    </button>
+  </div>
+</div>
+
+<div id="game-header" style="display: none;">
   <h1>伝説のまもりびと</h1>
   <div class="hud-info">
     <span><span class="gold-icon">&#x2B50;</span> <span id="gold">100</span>G</span>
@@ -266,7 +384,7 @@ canvas {
   </div>
 </div>
 
-<div id="game-container">
+<div id="game-container" style="display: none;">
   <canvas id="gameCanvas" width="760" height="600"></canvas>
   <div id="side-panel">
     <h3>味方ユニット</h3>
@@ -290,6 +408,7 @@ canvas {
     <p>Wave <span id="final-wave">0</span> まで到達</p>
     <p>スコア: <span id="final-score">0</span></p>
     <button id="restart-btn" onclick="restartGame()">もう一度挑戦</button>
+    <button id="menu-btn" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
 
   <div id="victory-overlay">
@@ -297,6 +416,7 @@ canvas {
     <p>全Waveを制覇！</p>
     <p>スコア: <span id="final-score2">0</span></p>
     <button id="restart-btn2" onclick="restartGame()">もう一度挑戦</button>
+    <button id="menu-btn2" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
 </div>
 
@@ -597,6 +717,7 @@ function createParticle(x, y, color) {
 
 // ===== メインループ =====
 let lastTime = 0;
+let loopId = 0;
 
 function gameLoop(timestamp) {
   const rawDt = Math.min((timestamp - lastTime) / 1000, 0.05);
@@ -607,7 +728,7 @@ function gameLoop(timestamp) {
     update(dt);
   }
   render();
-  requestAnimationFrame(gameLoop);
+  loopId = requestAnimationFrame(gameLoop);
 }
 
 function update(dt) {
@@ -1104,9 +1225,23 @@ function restartGame() {
   init();
 }
 
-// ===== 開始 =====
-init();
-requestAnimationFrame(gameLoop);
+// ===== メニュー =====
+function startSortie() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('game-header').style.display = 'flex';
+  document.getElementById('game-container').style.display = 'flex';
+  init();
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+function returnToMenu() {
+  gameOver = true;
+  cancelAnimationFrame(loopId);
+  document.getElementById('game-header').style.display = 'none';
+  document.getElementById('game-container').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+}
 </script>
 </body>
 </html>
