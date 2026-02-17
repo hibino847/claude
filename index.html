@@ -608,6 +608,232 @@ canvas {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
 
+/* 武器工房画面 */
+#weapon-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #2a1a0a, #1a0d00);
+  border: 2px solid #cc8844;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+
+#weapon-screen h2 {
+  font-size: 28px;
+  color: #cc8844;
+  margin-bottom: 4px;
+}
+
+#weapon-crystal-display {
+  font-size: 14px;
+  color: #ffcc44;
+  margin-bottom: 12px;
+}
+
+#weapon-slots {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.weapon-slot {
+  width: 140px;
+  padding: 10px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #665533;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  color: #e0ffe0;
+}
+
+.weapon-slot:hover {
+  border-color: #cc8844;
+  background: rgba(204, 136, 68, 0.1);
+}
+
+.weapon-slot.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.weapon-slot .ws-job {
+  font-size: 11px;
+  color: #a0c090;
+  margin-bottom: 4px;
+}
+
+.weapon-slot .ws-icon {
+  font-size: 28px;
+}
+
+.weapon-slot .ws-name {
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+.weapon-slot .ws-refine {
+  font-size: 11px;
+  color: #ffcc44;
+}
+
+.weapon-slot .ws-empty {
+  font-size: 12px;
+  color: #888;
+  padding: 8px 0;
+}
+
+#weapon-action {
+  display: none;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #cc8844;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 12px;
+  width: 580px;
+  text-align: center;
+}
+
+#weapon-action h3 {
+  font-size: 16px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
+
+#weapon-craft-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.craft-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(204, 136, 68, 0.2);
+  border: 2px solid #886633;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #e0ffe0;
+  font-family: inherit;
+  transition: all 0.2s;
+  width: 100px;
+}
+
+.craft-btn:hover {
+  background: rgba(204, 136, 68, 0.4);
+  border-color: #cc8844;
+}
+
+.craft-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.craft-btn .craft-icon { font-size: 24px; }
+.craft-btn .craft-name { font-size: 11px; font-weight: bold; }
+.craft-btn .craft-cost { font-size: 10px; color: #ffcc44; }
+
+#weapon-refine-panel {
+  text-align: center;
+}
+
+#weapon-refine-panel .refine-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+#weapon-refine-panel .refine-stat-label {
+  color: #a0c090;
+  font-size: 11px;
+}
+
+#weapon-refine-panel .refine-arrow {
+  color: #44ff44;
+}
+
+.refine-btn {
+  padding: 8px 24px;
+  background: linear-gradient(180deg, #8a5a2a, #5a3a1a);
+  border: 2px solid #cc8844;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.refine-btn:hover {
+  background: linear-gradient(180deg, #aa7a4a, #8a5a2a);
+  box-shadow: 0 0 12px rgba(204, 136, 68, 0.4);
+}
+
+.refine-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.refine-rate {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+#refine-result {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.discard-btn {
+  padding: 4px 16px;
+  background: rgba(150, 50, 50, 0.3);
+  border: 1px solid #cc4444;
+  border-radius: 4px;
+  color: #ff8888;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+}
+
+.discard-btn:hover { background: rgba(150, 50, 50, 0.6); }
+
+#weapon-back-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#weapon-back-btn:hover {
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
+.menu-btn.btn-weapon {
+  background: linear-gradient(180deg, #8a5a2a, #5a3a1a);
+  border-color: #cc8844;
+}
+
+.menu-btn.btn-weapon:hover {
+  background: linear-gradient(180deg, #aa7a4a, #8a5a2a);
+  box-shadow: 0 0 20px rgba(204, 136, 68, 0.4);
+}
+
 /* モバイル対応 */
 @media (max-width: 959px) {
   body {
@@ -695,6 +921,39 @@ canvas {
   #enhance-detail {
     width: 90%;
     padding: 12px 10px;
+  }
+
+  #weapon-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 16px 0;
+  }
+
+  #weapon-slots {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .weapon-slot {
+    width: 120px;
+    padding: 8px;
+  }
+
+  #weapon-action {
+    width: 90%;
+    padding: 10px;
+  }
+
+  #weapon-craft-list {
+    gap: 6px;
+  }
+
+  .craft-btn {
+    width: 80px;
+    padding: 6px 8px;
   }
 
   #game-header {
@@ -794,6 +1053,9 @@ canvas {
     <button class="menu-btn btn-formation" onclick="openFormation()">
       <span class="menu-btn-icon">📋</span>編成
     </button>
+    <button class="menu-btn btn-weapon" onclick="openWeapon()">
+      <span class="menu-btn-icon">⚒️</span>武器
+    </button>
     <button class="menu-btn btn-enhance" onclick="openEnhance()">
       <span class="menu-btn-icon">💎</span>強化
     </button>
@@ -816,6 +1078,14 @@ canvas {
   <div id="enhance-grid"></div>
   <div id="enhance-detail"></div>
   <button id="enhance-back-btn" onclick="closeEnhance()">戻る</button>
+</div>
+
+<div id="weapon-screen">
+  <h2>武器工房</h2>
+  <div id="weapon-crystal-display">💎 結晶: <span id="weapon-crystal-count">0</span></div>
+  <div id="weapon-slots"></div>
+  <div id="weapon-action"></div>
+  <button id="weapon-back-btn" onclick="closeWeapon()">戻る</button>
 </div>
 
 <div id="game-header" style="display: none;">
@@ -919,7 +1189,25 @@ const ALLY_DEFS = [
 let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 聖騎士
 const SLOT_LABELS = ['前列・上', '後列・上', '前列・下', '後列・下'];
 
-// 永続データ（強化）
+// 武器定義
+const WEAPON_DEFS = [
+  { name: '鉄の剣', icon: '🗡️', atkMult: 1.3, rangePlus: 0, speedMult: 1.0, cost: 20, desc: '攻撃力重視' },
+  { name: '鉄の弓', icon: '🏹', atkMult: 1.1, rangePlus: 30, speedMult: 1.0, cost: 20, desc: '射程重視' },
+  { name: '魔法の杖', icon: '🪄', atkMult: 1.15, rangePlus: 15, speedMult: 0.9, cost: 30, desc: '攻撃速度+射程' },
+  { name: '鉄の槍', icon: '🔱', atkMult: 1.2, rangePlus: 20, speedMult: 1.0, cost: 25, desc: 'バランス型' },
+  { name: '短剣', icon: '🔪', atkMult: 1.1, rangePlus: 0, speedMult: 0.8, cost: 25, desc: '超高速攻撃' },
+  { name: '聖なる盾', icon: '🛡️', atkMult: 1.0, rangePlus: 10, speedMult: 0.95, cost: 15, desc: '堅実な防御型' },
+];
+const REFINE_MAX = 10;
+
+function getRefineCost(lv) { return 15 + lv * 20; }
+function getRefineRate(lv) { return Math.max(30, 100 - lv * 10); }
+function getRefineBonus(lv) {
+  return { atkMult: 1 + lv * 0.08, rangePlus: lv * 4, speedMult: 1 - lv * 0.03 };
+}
+
+// 永続データ
+let weapons = [null, null, null, null]; // 各スロットの装備武器 {type, refine}
 let crystals = 50; // 結晶（永続通貨）初期50個
 let enhanceLevels = new Array(ALLY_DEFS.length).fill(0); // 各職業の強化Lv (最大10)
 const ENHANCE_MAX = 10;
@@ -961,21 +1249,31 @@ function init() {
   gameOver = false;
   victory = false;
 
-  // 編成に従って味方4人を配置（強化ボーナス適用）
+  // 編成に従って味方4人を配置（強化+武器ボーナス適用）
   for (let i = 0; i < formation.length; i++) {
     const defIdx = formation[i];
     const def = ALLY_DEFS[defIdx];
     const pos = ALLY_POSITIONS[i];
-    const bonus = getEnhanceBonus(enhanceLevels[defIdx]);
+    const enh = getEnhanceBonus(enhanceLevels[defIdx]);
+    // 武器ボーナス
+    const w = weapons[i];
+    let wAtkMult = 1, wRangePlus = 0, wSpeedMult = 1;
+    if (w) {
+      const wDef = WEAPON_DEFS[w.type];
+      const rB = getRefineBonus(w.refine);
+      wAtkMult = wDef.atkMult * rB.atkMult;
+      wRangePlus = wDef.rangePlus + rB.rangePlus;
+      wSpeedMult = wDef.speedMult * rB.speedMult;
+    }
     allies.push({
       type: defIdx,
       name: def.name,
       icon: def.icon,
       x: pos.x,
       y: pos.y,
-      damage: def.damage * bonus.damageMult,
-      range: def.range + bonus.rangePlus,
-      speed: def.speed * bonus.speedMult,
+      damage: def.damage * enh.damageMult * wAtkMult,
+      range: def.range + enh.rangePlus + wRangePlus,
+      speed: def.speed * enh.speedMult * wSpeedMult,
       color: def.color,
       splash: def.splash || 0,
       slow: def.slow || 0,
@@ -1840,6 +2138,153 @@ function doEnhance() {
   renderEnhance();
 }
 
+// ===== 武器工房画面 =====
+let weaponSelectedSlot = -1;
+
+function openWeapon() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('weapon-screen').style.display = 'flex';
+  weaponSelectedSlot = -1;
+  renderWeapon();
+  setTimeout(fitToScreen, 0);
+}
+
+function closeWeapon() {
+  document.getElementById('weapon-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+  updateMenuCrystal();
+  setTimeout(fitToScreen, 0);
+}
+
+function renderWeapon() {
+  document.getElementById('weapon-crystal-count').textContent = crystals;
+  const container = document.getElementById('weapon-slots');
+  container.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const jobDef = ALLY_DEFS[formation[i]];
+    const w = weapons[i];
+    const slot = document.createElement('div');
+    slot.className = 'weapon-slot' + (weaponSelectedSlot === i ? ' selected' : '');
+    slot.onclick = () => { weaponSelectedSlot = (weaponSelectedSlot === i) ? -1 : i; renderWeapon(); };
+    if (w) {
+      const wDef = WEAPON_DEFS[w.type];
+      slot.innerHTML =
+        '<div class="ws-job">' + jobDef.icon + ' ' + jobDef.name + '</div>' +
+        '<div class="ws-icon">' + wDef.icon + '</div>' +
+        '<div class="ws-name">' + wDef.name + '</div>' +
+        '<div class="ws-refine">+' + w.refine + '</div>';
+    } else {
+      slot.innerHTML =
+        '<div class="ws-job">' + jobDef.icon + ' ' + jobDef.name + '</div>' +
+        '<div class="ws-empty">武器なし</div>';
+    }
+    container.appendChild(slot);
+  }
+  renderWeaponAction();
+}
+
+function renderWeaponAction() {
+  const panel = document.getElementById('weapon-action');
+  if (weaponSelectedSlot < 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  const i = weaponSelectedSlot;
+  const w = weapons[i];
+
+  if (!w) {
+    // 武器作成モード
+    let html = '<h3>⚒️ 武器作成</h3><div id="weapon-craft-list">';
+    for (let j = 0; j < WEAPON_DEFS.length; j++) {
+      const d = WEAPON_DEFS[j];
+      html += '<button class="craft-btn" onclick="craftWeapon(' + j + ')"' +
+        (crystals < d.cost ? ' disabled' : '') + '>' +
+        '<div class="craft-icon">' + d.icon + '</div>' +
+        '<div class="craft-name">' + d.name + '</div>' +
+        '<div class="craft-cost">💎' + d.cost + '</div>' +
+        '</button>';
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  } else {
+    // 精錬モード
+    const wDef = WEAPON_DEFS[w.type];
+    const lv = w.refine;
+    const maxed = lv >= REFINE_MAX;
+    const cost = maxed ? 0 : getRefineCost(lv);
+    const rate = maxed ? 0 : getRefineRate(lv);
+    const curB = getRefineBonus(lv);
+    const nxtB = maxed ? curB : getRefineBonus(lv + 1);
+
+    const atkCur = Math.round(wDef.atkMult * curB.atkMult * 100);
+    const rngCur = Math.round(wDef.rangePlus + curB.rangePlus);
+    const spdCur = Math.round(wDef.speedMult * curB.speedMult * 100);
+    const atkNxt = Math.round(wDef.atkMult * nxtB.atkMult * 100);
+    const rngNxt = Math.round(wDef.rangePlus + nxtB.rangePlus);
+    const spdNxt = Math.round(wDef.speedMult * nxtB.speedMult * 100);
+
+    let html = '<div id="weapon-refine-panel">' +
+      '<h3>' + wDef.icon + ' ' + wDef.name + ' +' + lv + (maxed ? ' MAX' : '') + '</h3>' +
+      '<div class="refine-stats">' +
+        '<div><div class="refine-stat-label">攻撃倍率</div>' + atkCur + '%' +
+          (maxed ? '' : ' <span class="refine-arrow">→ ' + atkNxt + '%</span>') + '</div>' +
+        '<div><div class="refine-stat-label">射程+</div>' + rngCur +
+          (maxed ? '' : ' <span class="refine-arrow">→ ' + rngNxt + '</span>') + '</div>' +
+        '<div><div class="refine-stat-label">速度倍率</div>' + spdCur + '%' +
+          (maxed ? '' : ' <span class="refine-arrow">→ ' + spdNxt + '%</span>') + '</div>' +
+      '</div>';
+
+    if (maxed) {
+      html += '<div style="color:#ffcc44;font-weight:bold;">精錬MAX!</div>';
+    } else {
+      html += '<button class="refine-btn" onclick="refineWeapon()"' +
+        (crystals < cost ? ' disabled' : '') +
+        '>精錬する (💎' + cost + ')</button>' +
+        '<div class="refine-rate">成功率: <span style="color:' +
+        (rate >= 70 ? '#44ff44' : rate >= 50 ? '#ffcc44' : '#ff6644') +
+        '">' + rate + '%</span></div>';
+    }
+    html += '<div id="refine-result"></div>';
+    html += '<button class="discard-btn" onclick="discardWeapon()">武器を破棄</button>';
+    html += '</div>';
+    panel.innerHTML = html;
+  }
+}
+
+function craftWeapon(typeIdx) {
+  if (weaponSelectedSlot < 0) return;
+  const d = WEAPON_DEFS[typeIdx];
+  if (crystals < d.cost) return;
+  crystals -= d.cost;
+  weapons[weaponSelectedSlot] = { type: typeIdx, refine: 0 };
+  renderWeapon();
+}
+
+function refineWeapon() {
+  if (weaponSelectedSlot < 0) return;
+  const w = weapons[weaponSelectedSlot];
+  if (!w || w.refine >= REFINE_MAX) return;
+  const cost = getRefineCost(w.refine);
+  if (crystals < cost) return;
+  crystals -= cost;
+  const rate = getRefineRate(w.refine);
+  const success = Math.random() * 100 < rate;
+  if (success) {
+    w.refine++;
+    renderWeapon();
+    document.getElementById('refine-result').innerHTML =
+      '<span style="color:#44ff44;">✨ 精錬成功！ +' + w.refine + ' に強化！</span>';
+  } else {
+    renderWeapon();
+    document.getElementById('refine-result').innerHTML =
+      '<span style="color:#ff4444;">💥 精錬失敗... 結晶を失った</span>';
+  }
+}
+
+function discardWeapon() {
+  if (weaponSelectedSlot < 0) return;
+  weapons[weaponSelectedSlot] = null;
+  renderWeapon();
+}
+
 function returnToMenu() {
   gameOver = true;
   cancelAnimationFrame(loopId);
@@ -1883,6 +2328,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.7.0</div>
+<div id="version-label">v0.8.0</div>
 </body>
 </html>
