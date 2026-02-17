@@ -394,7 +394,7 @@ canvas {
   <h1>伝説のまもりびと</h1>
   <div class="hud-info">
     <span><span class="gold-icon">&#x2B50;</span> <span id="gold">100</span>G</span>
-    <span><span class="life-icon">&#x2764;</span> <span id="lives">20</span></span>
+    <span><span class="life-icon">&#x2764;</span> <span id="core-hp">500</span>/<span id="core-max-hp">500</span></span>
     <span><span class="wave-icon">&#x2694;</span> Wave <span id="wave">0</span>/<span id="max-wave">30</span></span>
     <span>Score: <span id="score">0</span></span>
     <span>
@@ -416,7 +416,6 @@ canvas {
       <div class="stat"><span>攻撃力</span><span id="info-damage"></span></div>
       <div class="stat"><span>射程</span><span id="info-range"></span></div>
       <div class="stat"><span>速度</span><span id="info-speed"></span></div>
-      <div class="stat"><span>HP</span><span id="info-hp"></span></div>
       <button id="upgrade-btn" onclick="upgradeAlly()">強化 (<span id="upgrade-cost"></span>G)</button>
     </div>
 
@@ -453,6 +452,19 @@ const GOAL_X = 700;   // 味方の防衛ライン（右側）
 const SPAWN_X = -30;  // 敵のスポーン位置（左端の外）
 const MAX_WAVE = 30;
 
+// コア（防衛対象）
+const CORE_X = 730;
+const CORE_Y = 280;
+const CORE_MAX_HP = 500;
+
+// 味方配置（2x2グリッド: 上2人、下2人）
+const ALLY_POSITIONS = [
+  { x: 580, y: 180 },  // 剣士 - 前列上
+  { x: 660, y: 180 },  // 弓兵 - 後列上
+  { x: 580, y: 380 },  // 魔法使い - 前列下
+  { x: 660, y: 380 },  // 聖騎士 - 後列下
+];
+
 // 味方ユニット定義
 const ALLY_DEFS = [
   { name: '剣士', icon: '⚔️', damage: 20, range: 80, speed: 0.8, maxHp: 150, color: '#cc4444',
@@ -466,7 +478,8 @@ const ALLY_DEFS = [
 ];
 
 // ===== ゲーム状態 =====
-let gold, lives, wave, score, gameSpeed;
+let gold, wave, score, gameSpeed;
+let core;
 let allies, enemies, projectiles, particles;
 let selectedAlly;
 let waveActive, spawning, spawnTimer, spawnQueue;
@@ -477,10 +490,10 @@ const ctx = canvas.getContext('2d');
 
 function init() {
   gold = 100;
-  lives = 20;
   wave = 0;
   score = 0;
   gameSpeed = 1;
+  core = { hp: CORE_MAX_HP, maxHp: CORE_MAX_HP };
   allies = [];
   enemies = [];
   projectiles = [];
@@ -493,29 +506,26 @@ function init() {
   gameOver = false;
   victory = false;
 
-  // 初期味方4人を配置（各レーンに1人）
-  for (let i = 0; i < LANE_COUNT; i++) {
+  // 初期味方4人を配置（2x2グリッド: 上2人、下2人）
+  for (let i = 0; i < ALLY_DEFS.length; i++) {
     const def = ALLY_DEFS[i];
-    const laneY = LANE_TOP + i * LANE_H + LANE_H / 2;
+    const pos = ALLY_POSITIONS[i];
     allies.push({
       type: i,
       name: def.name,
       icon: def.icon,
-      x: GOAL_X,
-      y: laneY,
-      lane: i,
+      x: pos.x,
+      y: pos.y,
       level: 1,
       damage: def.damage,
       range: def.range,
       speed: def.speed,
-      maxHp: def.maxHp,
-      hp: def.maxHp,
       color: def.color,
       splash: def.splash || 0,
       slow: def.slow || 0,
       cooldown: 0,
       totalSpent: 0,
-      angle: Math.PI, // 左を向く
+      angle: Math.PI,
       attackAnim: 0,
     });
   }
@@ -556,7 +566,8 @@ function selectAlly(idx) {
 // ===== HUD更新 =====
 function updateHUD() {
   document.getElementById('gold').textContent = gold;
-  document.getElementById('lives').textContent = lives;
+  document.getElementById('core-hp').textContent = Math.ceil(core.hp);
+  document.getElementById('core-max-hp').textContent = core.maxHp;
   document.getElementById('wave').textContent = wave;
   document.getElementById('max-wave').textContent = MAX_WAVE;
   document.getElementById('score').textContent = score;
@@ -575,7 +586,6 @@ function updateAllyInfo() {
   document.getElementById('info-damage').textContent = Math.round(a.damage);
   document.getElementById('info-range').textContent = Math.round(a.range) + 'px';
   document.getElementById('info-speed').textContent = a.speed.toFixed(2) + 's';
-  document.getElementById('info-hp').textContent = `${Math.round(a.hp)} / ${a.maxHp}`;
 
   const cost = getUpgradeCost(a);
   document.getElementById('upgrade-cost').textContent = cost;
@@ -598,8 +608,6 @@ function upgradeAlly() {
   a.damage *= 1.25;
   a.range += 10;
   a.speed *= 0.95;
-  a.maxHp += 20;
-  a.hp = Math.min(a.hp + 20, a.maxHp);
   if (a.splash > 0) a.splash += 5;
   if (a.slow > 0) a.slow = Math.min(a.slow + 0.03, 0.6);
   a.totalSpent += cost;
@@ -621,8 +629,10 @@ function setSpeed(s) {
 canvas.addEventListener('click', (e) => {
   if (gameOver || victory) return;
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const scaleX = CANVAS_W / rect.width;
+  const scaleY = CANVAS_H / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
 
   // 味方をクリックで選択
   let found = -1;
@@ -769,10 +779,8 @@ function update(dt) {
     waveActive = false;
     document.getElementById('wave-btn').disabled = false;
     gold += 10 + wave * 2;
-    // ウェーブ間でHP少し回復
-    for (const a of allies) {
-      a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.2);
-    }
+    // ウェーブ間でコアHP少し回復
+    core.hp = Math.min(core.maxHp, core.hp + core.maxHp * 0.05);
     updateHUD();
     updateAllyInfo();
 
@@ -783,7 +791,7 @@ function update(dt) {
     }
   }
 
-  // 敵移動 & 戦闘
+  // 敵移動 & コア攻撃
   for (const e of enemies) {
     if (!e.alive) continue;
 
@@ -795,51 +803,28 @@ function update(dt) {
     }
     e.speed = spd;
 
-    // 同じレーンの味方を探す
-    const laneAlly = allies.find(a => a.lane === e.lane && a.hp > 0);
-
-    if (laneAlly) {
-      const distToAlly = laneAlly.x - e.x;
-      // 味方に近づいたら攻撃
-      if (distToAlly < 40) {
-        // 近接戦闘
-        e.attackCooldown -= dt;
-        if (e.attackCooldown <= 0) {
-          laneAlly.hp -= e.attackDamage;
-          e.attackCooldown = e.attackSpeed;
-          // 攻撃エフェクト
-          for (let i = 0; i < 3; i++) {
-            particles.push(createParticle(laneAlly.x - 15, laneAlly.y, '#ff4444'));
-          }
-          if (laneAlly.hp <= 0) {
-            laneAlly.hp = 0;
-            // 味方撃破エフェクト
-            for (let i = 0; i < 15; i++) {
-              particles.push(createParticle(laneAlly.x, laneAlly.y, laneAlly.color));
-            }
-          }
-          updateAllyInfo();
+    // コアに到達したら攻撃
+    if (e.x >= CORE_X - 20) {
+      e.x = CORE_X - 20;
+      e.attackCooldown -= dt;
+      if (e.attackCooldown <= 0) {
+        core.hp -= e.attackDamage;
+        e.attackCooldown = e.attackSpeed;
+        for (let i = 0; i < 3; i++) {
+          particles.push(createParticle(CORE_X, CORE_Y, '#ff4444'));
         }
-      } else {
-        // 右へ移動
-        e.x += spd * dt;
-      }
-    } else {
-      // レーンに味方がいない → ゴールへ向かう
-      e.x += spd * dt;
-
-      if (e.x >= CANVAS_W + 20) {
-        e.alive = false;
-        lives -= e.damage;
-        updateHUD();
-        if (lives <= 0) {
-          lives = 0;
+        if (core.hp <= 0) {
+          core.hp = 0;
           gameOver = true;
           document.getElementById('final-wave').textContent = wave;
           document.getElementById('final-score').textContent = score;
           document.getElementById('game-over-overlay').style.display = 'flex';
         }
+        updateHUD();
       }
+    } else {
+      // 右へ移動
+      e.x += spd * dt;
     }
 
     // ヒーラー: 周囲の敵を回復
@@ -859,7 +844,6 @@ function update(dt) {
 
   // 味方攻撃
   for (const a of allies) {
-    if (a.hp <= 0) continue;
     a.cooldown -= dt;
     if (a.attackAnim > 0) a.attackAnim -= dt;
     if (a.cooldown > 0) continue;
@@ -1030,19 +1014,46 @@ function render() {
     }
   }
 
-  // 防衛ライン
-  ctx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 8]);
+  // コア描画
+  // コア台座
   ctx.beginPath();
-  ctx.moveTo(GOAL_X + 30, LANE_TOP);
-  ctx.lineTo(GOAL_X + 30, CANVAS_H);
+  ctx.arc(CORE_X, CORE_Y, 28, 0, Math.PI * 2);
+  const coreGrad = ctx.createRadialGradient(CORE_X, CORE_Y, 5, CORE_X, CORE_Y, 28);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.4, '#66ddff');
+  coreGrad.addColorStop(1, '#2244aa');
+  ctx.fillStyle = coreGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#aaeeff';
+  ctx.lineWidth = 3;
   ctx.stroke();
-  ctx.setLineDash([]);
   ctx.lineWidth = 1;
+  // コアアイコン
+  ctx.font = '28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('💎', CORE_X, CORE_Y);
+  // コアHPバー
+  const coreBarW = 60;
+  const coreBarH = 6;
+  const coreBarX = CORE_X - coreBarW / 2;
+  const coreBarY = CORE_Y + 34;
+  ctx.fillStyle = '#333';
+  ctx.fillRect(coreBarX, coreBarY, coreBarW, coreBarH);
+  const coreRatio = Math.max(0, core.hp / core.maxHp);
+  ctx.fillStyle = coreRatio > 0.5 ? '#44ccff' : coreRatio > 0.25 ? '#cccc44' : '#cc4444';
+  ctx.fillRect(coreBarX, coreBarY, coreBarW * coreRatio, coreBarH);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(coreBarX, coreBarY, coreBarW, coreBarH);
+  // コアラベル
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillStyle = '#aaeeff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('CORE', CORE_X, CORE_Y - 32);
 
   // 味方射程（選択時）
-  if (selectedAlly && selectedAlly.hp > 0) {
+  if (selectedAlly) {
     const a = selectedAlly;
     ctx.beginPath();
     ctx.arc(a.x, a.y, a.range, 0, Math.PI * 2);
@@ -1119,20 +1130,6 @@ function render() {
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.fill();
 
-    if (a.hp <= 0) {
-      // 倒れた味方
-      ctx.globalAlpha = 0.3;
-      ctx.font = '30px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(a.icon, a.x, a.y);
-      ctx.font = '12px sans-serif';
-      ctx.fillStyle = '#ff4444';
-      ctx.fillText('💀', a.x, a.y - 20);
-      ctx.globalAlpha = 1;
-      continue;
-    }
-
     // 攻撃アニメーション（ちょっと前に出る）
     let drawX = a.x;
     if (a.attackAnim > 0) {
@@ -1163,19 +1160,6 @@ function render() {
       ctx.textBaseline = 'alphabetic';
       ctx.fillText('★' + a.level, drawX, a.y - 24);
     }
-
-    // HPバー
-    const barW = 40;
-    const barH = 5;
-    const barX = drawX - barW / 2;
-    const barY = a.y + 26;
-    ctx.fillStyle = '#333';
-    ctx.fillRect(barX, barY, barW, barH);
-    const hpRatio = a.hp / a.maxHp;
-    ctx.fillStyle = hpRatio > 0.5 ? '#44cc44' : hpRatio > 0.25 ? '#cccc44' : '#cc4444';
-    ctx.fillRect(barX, barY, barW * hpRatio, barH);
-    ctx.strokeStyle = '#000';
-    ctx.strokeRect(barX, barY, barW, barH);
 
     // 選択ハイライト
     if (selectedAlly === a) {
@@ -1228,9 +1212,8 @@ function render() {
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const aliveAllies = allies.filter(a => a.hp > 0).length;
   const aliveEnemies = enemies.filter(e => e.alive).length;
-  ctx.fillText(`味方: ${aliveAllies}/${LANE_COUNT}  |  敵: ${aliveEnemies}体  |  残ライフ: ${lives}`, 10, CANVAS_H - 12);
+  ctx.fillText(`コアHP: ${Math.ceil(core.hp)}/${core.maxHp}  |  敵: ${aliveEnemies}体  |  味方: ${allies.length}人`, 10, CANVAS_H - 12);
 }
 
 function drawCloud(x, y, size) {
@@ -1279,6 +1262,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.3.0</div>
+<div id="version-label">v0.4.0</div>
 </body>
 </html>
