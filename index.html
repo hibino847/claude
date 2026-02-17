@@ -1341,6 +1341,7 @@ canvas {
       <div class="stat"><span>攻撃力</span><span id="info-damage"></span></div>
       <div class="stat"><span>射程</span><span id="info-range"></span></div>
       <div class="stat"><span>速度</span><span id="info-speed"></span></div>
+      <div class="stat"><span>経験値</span><span id="info-xp" style="color:#88ccff;"></span></div>
     </div>
 
     <div id="auto-status" style="text-align:center; padding:8px; color:#ffcc44; font-size:13px; font-weight:bold;">
@@ -1353,6 +1354,7 @@ canvas {
     <p>Wave <span id="final-wave">0</span> まで到達</p>
     <p>スコア: <span id="final-score">0</span></p>
     <p style="color:#ffcc44;">💎 +<span id="defeat-reward">0</span> 結晶</p>
+    <div id="defeat-xp-result" style="font-size:13px; margin:8px 0; max-width:400px;"></div>
     <button id="restart-btn" onclick="restartGame()">もう一度挑戦</button>
     <button id="menu-btn" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
@@ -1362,6 +1364,7 @@ canvas {
     <p>全Waveを制覇！</p>
     <p>スコア: <span id="final-score2">0</span></p>
     <p style="color:#ffcc44;">💎 +<span id="victory-reward">0</span> 結晶</p>
+    <div id="victory-xp-result" style="font-size:13px; margin:8px 0; max-width:400px;"></div>
     <button id="restart-btn2" onclick="restartGame()">もう一度挑戦</button>
     <button id="menu-btn2" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
@@ -1467,6 +1470,30 @@ function getEnhanceBonus(lv) {
   return { damageMult: 1 + lv * 0.1, rangePlus: lv * 5, speedMult: 1 - lv * 0.03 };
 }
 
+// レベルシステム
+const LEVEL_MAX = 30;
+let allyLevels = new Array(ALLY_DEFS.length).fill(1); // 各職業のレベル (1〜30)
+let allyXP = new Array(ALLY_DEFS.length).fill(0);     // 各職業の累計経験値
+
+function getXPForLevel(lv) {
+  // レベルアップに必要な累計XP
+  return Math.floor(lv * lv * 10 + lv * 20);
+}
+
+function getLevelBonus(lv) {
+  const t = lv - 1; // Lv1では0ボーナス
+  return { damageMult: 1 + t * 0.03, rangePlus: Math.floor(t * 1.5), speedMult: 1 - t * 0.005 };
+}
+
+function addXP(jobIdx, amount) {
+  if (allyLevels[jobIdx] >= LEVEL_MAX) return;
+  allyXP[jobIdx] += amount;
+  // レベルアップチェック
+  while (allyLevels[jobIdx] < LEVEL_MAX && allyXP[jobIdx] >= getXPForLevel(allyLevels[jobIdx])) {
+    allyLevels[jobIdx]++;
+  }
+}
+
 // ===== ゲーム状態 =====
 let wave, score, gameSpeed, waveDelay;
 let core;
@@ -1510,6 +1537,7 @@ function init() {
   spawnQueue = [];
   gameOver = false;
   victory = false;
+  sortieKills = 0;
 
   // 編成に従って味方4人を配置（強化+武器ボーナス適用）
   for (let i = 0; i < formation.length; i++) {
@@ -1517,6 +1545,7 @@ function init() {
     const def = ALLY_DEFS[defIdx];
     const pos = ALLY_POSITIONS[i];
     const enh = getEnhanceBonus(enhanceLevels[defIdx]);
+    const lvB = getLevelBonus(allyLevels[defIdx]);
     // 武器ボーナス
     const w = weapons[i];
     let wAtkMult = 1, wRangePlus = 0, wSpeedMult = 1;
@@ -1533,9 +1562,9 @@ function init() {
       icon: def.icon,
       x: pos.x,
       y: pos.y,
-      damage: def.damage * enh.damageMult * wAtkMult,
-      range: def.range + enh.rangePlus + wRangePlus,
-      speed: def.speed * enh.speedMult * wSpeedMult,
+      damage: def.damage * enh.damageMult * lvB.damageMult * wAtkMult,
+      range: def.range + enh.rangePlus + lvB.rangePlus + wRangePlus,
+      speed: def.speed * enh.speedMult * lvB.speedMult * wSpeedMult,
       color: def.color,
       splash: def.splash || 0,
       slow: def.slow || 0,
@@ -1570,9 +1599,10 @@ function buildAllyButtons() {
     const btn = document.createElement('div');
     btn.className = 'ally-btn';
     btn.onclick = () => selectAlly(i);
+    const lv = allyLevels[a.type];
     btn.innerHTML = `
       <div class="ally-icon">${a.icon}</div>
-      <div class="ally-name">${a.name}</div>
+      <div class="ally-name">${a.name} <span style="color:#88ccff;font-size:10px;">Lv.${lv}</span></div>
       <div class="ally-desc">${ALLY_DEFS[a.type].desc}</div>
     `;
     container.appendChild(btn);
@@ -1605,10 +1635,14 @@ function updateAllyInfo() {
   }
   const a = selectedAlly;
   panel.style.display = 'block';
-  document.getElementById('info-name').textContent = `${a.icon} ${a.name}`;
+  const alv = allyLevels[a.type];
+  const axp = allyXP[a.type];
+  const nextXP = alv < LEVEL_MAX ? getXPForLevel(alv) : axp;
+  document.getElementById('info-name').textContent = `${a.icon} ${a.name} Lv.${alv}`;
   document.getElementById('info-damage').textContent = Math.round(a.damage);
   document.getElementById('info-range').textContent = Math.round(a.range) + 'px';
   document.getElementById('info-speed').textContent = a.speed.toFixed(2) + 's';
+  document.getElementById('info-xp').textContent = alv >= LEVEL_MAX ? 'MAX' : axp + '/' + nextXP;
 }
 
 function setSpeed(s) {
@@ -1794,8 +1828,16 @@ function update(dt) {
         }
       }
       crystals += reward;
+      // クリアXPボーナス
+      const clearXP = Math.floor(wave * 5 + score * 0.1);
+      const lvBefore = formation.map(f => allyLevels[f]);
+      for (let i = 0; i < formation.length; i++) {
+        addXP(formation[i], clearXP);
+      }
+      const lvAfter = formation.map(f => allyLevels[f]);
       document.getElementById('final-score2').textContent = score;
       document.getElementById('victory-reward').textContent = reward;
+      showXPResult('victory-xp-result', lvBefore, lvAfter, clearXP);
       document.getElementById('victory-overlay').style.display = 'flex';
     } else {
       // 次Waveまで短い待機
@@ -1835,10 +1877,18 @@ function update(dt) {
             reward += Math.floor(MISSION_DEFS[currentMission].reward * 0.3);
           }
           crystals += reward;
+          // 敗北時XP（少なめ）
+          const defeatXP = Math.floor(wave * 3 + score * 0.05);
+          const lvBefore = formation.map(f => allyLevels[f]);
+          for (let fi = 0; fi < formation.length; fi++) {
+            addXP(formation[fi], defeatXP);
+          }
+          const lvAfter = formation.map(f => allyLevels[f]);
           document.getElementById('final-wave').textContent = wave;
           document.getElementById('final-score').textContent = score;
-          document.getElementById('game-over-overlay').style.display = 'flex';
           document.getElementById('defeat-reward').textContent = reward;
+          showXPResult('defeat-xp-result', lvBefore, lvAfter, defeatXP);
+          document.getElementById('game-over-overlay').style.display = 'flex';
         }
         updateHUD();
       }
@@ -1960,16 +2010,43 @@ function update(dt) {
   particles = particles.filter(p => p.life > 0);
 }
 
+let sortieKills = 0; // 出撃中の撃破数
+
 function dealDamage(enemy, dmg) {
   enemy.hp -= dmg;
   if (enemy.hp <= 0 && enemy.alive) {
     enemy.alive = false;
     score += enemy.score;
+    sortieKills++;
     updateHUD();
     for (let i = 0; i < 12; i++) {
       particles.push(createParticle(enemy.x, enemy.y, enemy.color));
     }
+    // 編成中の全職業にXP付与（撃破XP）
+    const xpGain = Math.floor(enemy.score * 0.5 + 2);
+    for (let i = 0; i < formation.length; i++) {
+      addXP(formation[i], xpGain);
+    }
   }
+}
+
+function showXPResult(elementId, lvBefore, lvAfter, bonusXP) {
+  const el = document.getElementById(elementId);
+  let html = '<div style="color:#88ccff;">📊 経験値 +' + bonusXP + ' (ボーナス)</div>';
+  html += '<div style="display:flex; gap:12px; justify-content:center; margin-top:6px; flex-wrap:wrap;">';
+  for (let i = 0; i < formation.length; i++) {
+    const def = ALLY_DEFS[formation[i]];
+    const before = lvBefore[i];
+    const after = lvAfter[i];
+    const leveled = after > before;
+    html += '<div style="text-align:center;">' +
+      '<div>' + def.icon + ' ' + def.name + '</div>' +
+      '<div style="color:' + (leveled ? '#ffdd44' : '#aaa') + ';">Lv.' + before +
+      (leveled ? ' → <span style="color:#44ff44;font-weight:bold;">Lv.' + after + ' UP!</span>' : '') +
+      '</div></div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 // ===== 描画 =====
@@ -2272,10 +2349,11 @@ function renderFormation() {
     const slot = document.createElement('div');
     slot.className = 'formation-slot' + (editingSlot === i ? ' active' : '');
     slot.onclick = () => selectSlot(i);
+    const lv = allyLevels[formation[i]];
     slot.innerHTML =
       '<div class="slot-label">' + SLOT_LABELS[i] + '</div>' +
       '<div class="slot-icon">' + def.icon + '</div>' +
-      '<div class="slot-name">' + def.name + '</div>' +
+      '<div class="slot-name">' + def.name + ' <span style="color:#88ccff;font-size:12px;">Lv.' + lv + '</span></div>' +
       '<div class="slot-desc">' + def.desc + '</div>';
     grid.appendChild(slot);
   }
@@ -2306,7 +2384,8 @@ function renderJobPicker() {
     btn.onclick = () => pickJob(j);
     btn.innerHTML =
       '<div class="pick-icon">' + def.icon + '</div>' +
-      '<div class="pick-name">' + def.name + '</div>';
+      '<div class="pick-name">' + def.name + '</div>' +
+      '<div style="font-size:10px;color:#88ccff;">Lv.' + allyLevels[j] + '</div>';
     picker.appendChild(btn);
   }
 }
@@ -2703,6 +2782,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.9.0</div>
+<div id="version-label">v0.10.0</div>
 </body>
 </html>
