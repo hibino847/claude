@@ -427,15 +427,19 @@ canvas {
 
 #job-picker {
   display: none;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
+  max-width: 520px;
 }
 
 .job-pick-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 16px;
+  width: 110px;
+  padding: 10px 8px;
   background: rgba(74, 138, 42, 0.3);
   border: 2px solid #4a8a2a;
   border-radius: 8px;
@@ -600,6 +604,14 @@ const ALLY_DEFS = [
     desc: '範囲攻撃＋スロー効果', splash: 60, slow: 0.3 },
   { name: '聖騎士', icon: '🛡️', damage: 15, range: 100, speed: 1.0, maxHp: 250, color: '#ffcc00',
     desc: '高耐久の守護者' },
+  { name: '忍者', icon: '🗡️', damage: 10, range: 120, speed: 0.4, maxHp: 90, color: '#6644aa',
+    desc: '超高速の連続攻撃' },
+  { name: '槍兵', icon: '🔱', damage: 16, range: 140, speed: 1.0, maxHp: 130, color: '#cc8844',
+    desc: '中距離の範囲突撃', splash: 40 },
+  { name: '狙撃手', icon: '🎯', damage: 45, range: 300, speed: 2.5, maxHp: 60, color: '#228888',
+    desc: '超長射程の一撃必殺' },
+  { name: '踊り子', icon: '💃', damage: 8, range: 160, speed: 1.2, maxHp: 70, color: '#ee55aa',
+    desc: '攻撃＋全体スロー付与', splash: 80, slow: 0.2 },
 ];
 
 // 編成データ（各スロットの職業インデックス）
@@ -1462,6 +1474,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.5.0</div>
+<div id="version-label">v0.5.1</div>
 </body>
 </html>
