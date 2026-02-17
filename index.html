@@ -834,6 +834,194 @@ canvas {
   box-shadow: 0 0 20px rgba(204, 136, 68, 0.4);
 }
 
+/* 任務選択画面 */
+#mission-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #1a2a0a, #0d1a00);
+  border: 2px solid #ff8800;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+#mission-screen h2 {
+  font-size: 28px;
+  color: #ff8800;
+  margin-bottom: 16px;
+}
+
+#mission-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 0 24px;
+  margin-bottom: 20px;
+}
+
+.mission-card {
+  width: 180px;
+  padding: 14px 10px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #665522;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  color: #e0ffe0;
+}
+
+.mission-card:hover {
+  border-color: #ff8800;
+  background: rgba(255, 136, 0, 0.1);
+  transform: scale(1.03);
+}
+
+.mission-card.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+}
+
+.mission-card.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mission-card.locked:hover {
+  transform: none;
+  border-color: #665522;
+  background: rgba(0,0,0,0.4);
+}
+
+.mission-card .mc-icon {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.mission-card .mc-name {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.mission-card .mc-desc {
+  font-size: 11px;
+  color: #a0c090;
+  margin-bottom: 6px;
+}
+
+.mission-card .mc-info {
+  font-size: 11px;
+  color: #ffcc44;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.mission-card .mc-difficulty {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.mission-card .mc-star {
+  font-size: 12px;
+}
+
+.mission-card .mc-star.filled {
+  color: #ffd700;
+}
+
+.mission-card .mc-star.empty {
+  color: #555;
+}
+
+.mission-card .mc-clear {
+  font-size: 10px;
+  color: #44ff44;
+  margin-top: 4px;
+}
+
+#mission-detail {
+  display: none;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #ff8800;
+  border-radius: 10px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  width: 520px;
+  text-align: center;
+}
+
+#mission-detail h3 {
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+#mission-detail .md-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+#mission-detail .md-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+#mission-detail .md-stat-label {
+  color: #a0c090;
+  font-size: 11px;
+}
+
+#mission-start-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #aa4400, #883300);
+  border: 2px solid #ff8800;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+#mission-start-btn:hover {
+  background: linear-gradient(180deg, #cc5500, #aa4400);
+  box-shadow: 0 0 16px rgba(255, 136, 0, 0.4);
+}
+
+#mission-start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#mission-back-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+}
+
+#mission-back-btn:hover {
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
 /* モバイル対応 */
 @media (max-width: 959px) {
   body {
@@ -919,6 +1107,37 @@ canvas {
   }
 
   #enhance-detail {
+    width: 90%;
+    padding: 12px 10px;
+  }
+
+  #mission-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 16px 0;
+  }
+
+  #mission-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .mission-card {
+    width: auto;
+    padding: 10px 8px;
+  }
+
+  .mission-card .mc-icon {
+    font-size: 28px;
+  }
+
+  .mission-card .mc-name {
+    font-size: 13px;
+  }
+
+  #mission-detail {
     width: 90%;
     padding: 12px 10px;
   }
@@ -1088,10 +1307,19 @@ canvas {
   <button id="weapon-back-btn" onclick="closeWeapon()">戻る</button>
 </div>
 
+<div id="mission-screen">
+  <h2>任務選択</h2>
+  <div id="mission-list"></div>
+  <div id="mission-detail"></div>
+  <button id="mission-start-btn" onclick="startMission()" disabled>出撃</button>
+  <button id="mission-back-btn" onclick="closeMission()">戻る</button>
+</div>
+
 <div id="game-header" style="display: none;">
   <h1>伝説のまもりびと</h1>
   <div class="hud-info">
     <span><span class="life-icon">&#x2764;</span> <span id="core-hp">500</span>/<span id="core-max-hp">500</span></span>
+    <span id="hud-mission-name" style="color:#ff8800;font-weight:bold;"></span>
     <span><span class="wave-icon">&#x2694;</span> Wave <span id="wave">0</span>/<span id="max-wave">30</span></span>
     <span>Score: <span id="score">0</span></span>
     <span>
@@ -1200,6 +1428,25 @@ const WEAPON_DEFS = [
 ];
 const REFINE_MAX = 10;
 
+// 任務定義
+const MISSION_DEFS = [
+  { name: '草原の小道', icon: '🌿', desc: '初心者向けの訓練任務',
+    waves: 10, hpMult: 0.6, speedMult: 0.8, reward: 15, stars: 1, unlock: 0 },
+  { name: '古びた街道', icon: '🏘️', desc: '旅路に潜むモンスター',
+    waves: 15, hpMult: 0.8, speedMult: 0.9, reward: 25, stars: 2, unlock: 0 },
+  { name: '暗黒の森', icon: '🌲', desc: '奥深くに棲む魔物たち',
+    waves: 20, hpMult: 1.0, speedMult: 1.0, reward: 40, stars: 3, unlock: 0 },
+  { name: '竜の峡谷', icon: '🏔️', desc: '強敵がひしめく険しい谷',
+    waves: 25, hpMult: 1.3, speedMult: 1.1, reward: 60, stars: 4, unlock: 1 },
+  { name: '魔王の城門', icon: '🏰', desc: '魔王軍の本拠地前線',
+    waves: 30, hpMult: 1.6, speedMult: 1.2, reward: 85, stars: 5, unlock: 2 },
+  { name: '煉獄の迷宮', icon: '🔥', desc: '灼熱地獄の最深部',
+    waves: 35, hpMult: 2.0, speedMult: 1.3, reward: 120, stars: 6, unlock: 3 },
+];
+
+// 任務クリアデータ
+let missionClears = new Array(MISSION_DEFS.length).fill(false);
+
 function getRefineCost(lv) { return 15 + lv * 20; }
 function getRefineRate(lv) { return Math.max(30, 100 - lv * 10); }
 function getRefineBonus(lv) {
@@ -1227,6 +1474,10 @@ let allies, enemies, projectiles, particles;
 let selectedAlly;
 let waveActive, spawning, spawnTimer, spawnQueue;
 let gameOver, victory;
+let currentMission = null; // 選択中の任務インデックス
+let missionMaxWave = MAX_WAVE;
+let missionHpMult = 1;
+let missionSpeedMult = 1;
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -1236,6 +1487,17 @@ function init() {
   score = 0;
   gameSpeed = 1;
   waveDelay = 0; // Wave間の待ち時間カウンタ
+  // 任務データ適用
+  if (currentMission !== null) {
+    const m = MISSION_DEFS[currentMission];
+    missionMaxWave = m.waves;
+    missionHpMult = m.hpMult;
+    missionSpeedMult = m.speedMult;
+  } else {
+    missionMaxWave = MAX_WAVE;
+    missionHpMult = 1;
+    missionSpeedMult = 1;
+  }
   core = { hp: CORE_MAX_HP, maxHp: CORE_MAX_HP };
   allies = [];
   enemies = [];
@@ -1285,6 +1547,14 @@ function init() {
 
   document.getElementById('game-over-overlay').style.display = 'none';
   document.getElementById('victory-overlay').style.display = 'none';
+  // HUDに任務名表示
+  if (currentMission !== null) {
+    const m = MISSION_DEFS[currentMission];
+    document.getElementById('hud-mission-name').textContent = m.icon + ' ' + m.name;
+  } else {
+    document.getElementById('hud-mission-name').textContent = '';
+  }
+
   buildAllyButtons();
   updateHUD();
 
@@ -1323,7 +1593,7 @@ function updateHUD() {
   document.getElementById('core-hp').textContent = Math.ceil(core.hp);
   document.getElementById('core-max-hp').textContent = core.maxHp;
   document.getElementById('wave').textContent = wave;
-  document.getElementById('max-wave').textContent = MAX_WAVE;
+  document.getElementById('max-wave').textContent = missionMaxWave;
   document.getElementById('score').textContent = score;
 }
 
@@ -1392,8 +1662,8 @@ function startNextWave() {
 function generateWave(w) {
   const queue = [];
   const baseCount = 5 + Math.floor(w * 1.5);
-  const hpMult = 1 + (w - 1) * 0.35;
-  const speedMult = 1 + Math.min(w * 0.02, 0.6);
+  const hpMult = (1 + (w - 1) * 0.35) * missionHpMult;
+  const speedMult = (1 + Math.min(w * 0.02, 0.6)) * missionSpeedMult;
 
   for (let i = 0; i < baseCount; i++) {
     let type = 'normal';
@@ -1511,9 +1781,18 @@ function update(dt) {
     core.hp = Math.min(core.maxHp, core.hp + core.maxHp * 0.05);
     updateHUD();
 
-    if (wave >= MAX_WAVE) {
+    if (wave >= missionMaxWave) {
       victory = true;
-      const reward = Math.floor(wave * 3 + score * 0.02);
+      let reward = Math.floor(wave * 3 + score * 0.02);
+      // 任務ボーナス報酬
+      if (currentMission !== null) {
+        const m = MISSION_DEFS[currentMission];
+        reward += m.reward;
+        if (!missionClears[currentMission]) {
+          missionClears[currentMission] = true;
+          reward += m.reward; // 初回クリアボーナス
+        }
+      }
       crystals += reward;
       document.getElementById('final-score2').textContent = score;
       document.getElementById('victory-reward').textContent = reward;
@@ -1550,7 +1829,11 @@ function update(dt) {
         if (core.hp <= 0) {
           core.hp = 0;
           gameOver = true;
-          const reward = Math.floor(wave * 2 + score * 0.01);
+          let reward = Math.floor(wave * 2 + score * 0.01);
+          // 任務敗北でも難易度に応じた少量報酬
+          if (currentMission !== null) {
+            reward += Math.floor(MISSION_DEFS[currentMission].reward * 0.3);
+          }
           crystals += reward;
           document.getElementById('final-wave').textContent = wave;
           document.getElementById('final-score').textContent = score;
@@ -1958,11 +2241,9 @@ function restartGame() {
 // ===== メニュー =====
 function startSortie() {
   document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('game-header').style.display = 'flex';
-  document.getElementById('game-container').style.display = 'flex';
-  init();
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  document.getElementById('mission-screen').style.display = 'flex';
+  missionSelected = -1;
+  renderMission();
   setTimeout(fitToScreen, 0);
 }
 
@@ -2285,6 +2566,100 @@ function discardWeapon() {
   renderWeapon();
 }
 
+// ===== 任務選択画面 =====
+let missionSelected = -1;
+
+function openMission() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('mission-screen').style.display = 'flex';
+  missionSelected = -1;
+  renderMission();
+  setTimeout(fitToScreen, 0);
+}
+
+function closeMission() {
+  document.getElementById('mission-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+  setTimeout(fitToScreen, 0);
+}
+
+function isMissionUnlocked(idx) {
+  const m = MISSION_DEFS[idx];
+  if (m.unlock === 0) return true;
+  // unlock = N means need to clear mission N-1
+  return missionClears[m.unlock - 1];
+}
+
+function renderMission() {
+  const list = document.getElementById('mission-list');
+  list.innerHTML = '';
+  for (let i = 0; i < MISSION_DEFS.length; i++) {
+    const m = MISSION_DEFS[i];
+    const unlocked = isMissionUnlocked(i);
+    const card = document.createElement('div');
+    card.className = 'mission-card' + (missionSelected === i ? ' selected' : '') + (!unlocked ? ' locked' : '');
+    if (unlocked) {
+      card.onclick = () => { missionSelected = (missionSelected === i) ? -1 : i; renderMission(); };
+    }
+
+    let starsHtml = '<div class="mc-difficulty">';
+    for (let s = 0; s < 6; s++) {
+      starsHtml += '<span class="mc-star ' + (s < m.stars ? 'filled' : 'empty') + '">★</span>';
+    }
+    starsHtml += '</div>';
+
+    card.innerHTML =
+      '<div class="mc-icon">' + m.icon + '</div>' +
+      '<div class="mc-name">' + (unlocked ? m.name : '???') + '</div>' +
+      '<div class="mc-desc">' + (unlocked ? m.desc : '前の任務をクリアしよう') + '</div>' +
+      '<div class="mc-info">' +
+        '<span>' + m.waves + ' Wave</span>' +
+        '<span>💎 ' + m.reward + ' (初回x2)</span>' +
+      '</div>' +
+      starsHtml +
+      (missionClears[i] ? '<div class="mc-clear">✅ クリア済み</div>' : '');
+    list.appendChild(card);
+  }
+
+  renderMissionDetail();
+  document.getElementById('mission-start-btn').disabled = (missionSelected < 0);
+}
+
+function renderMissionDetail() {
+  const detail = document.getElementById('mission-detail');
+  if (missionSelected < 0) { detail.style.display = 'none'; return; }
+  detail.style.display = 'block';
+  const m = MISSION_DEFS[missionSelected];
+
+  const diffLabel = m.stars <= 2 ? '初級' : m.stars <= 4 ? '中級' : '上級';
+  const diffColor = m.stars <= 2 ? '#44ff44' : m.stars <= 4 ? '#ffcc44' : '#ff4444';
+
+  detail.innerHTML =
+    '<h3>' + m.icon + ' ' + m.name + '</h3>' +
+    '<div class="md-stats">' +
+      '<div class="md-stat-item"><div class="md-stat-label">Wave数</div><div>' + m.waves + '</div></div>' +
+      '<div class="md-stat-item"><div class="md-stat-label">敵HP倍率</div><div>x' + m.hpMult.toFixed(1) + '</div></div>' +
+      '<div class="md-stat-item"><div class="md-stat-label">敵速度倍率</div><div>x' + m.speedMult.toFixed(1) + '</div></div>' +
+      '<div class="md-stat-item"><div class="md-stat-label">難易度</div><div style="color:' + diffColor + '">' + diffLabel + '</div></div>' +
+    '</div>' +
+    '<div style="font-size:13px; color:#ffcc44; margin-bottom:4px;">💎 報酬: ' + m.reward + ' 結晶' +
+      (!missionClears[missionSelected] ? ' <span style="color:#44ff44;">(初回クリア: +' + m.reward + ' ボーナス)</span>' : '') +
+    '</div>' +
+    '<div style="font-size:11px; color:#a0c090;">' + m.desc + '</div>';
+}
+
+function startMission() {
+  if (missionSelected < 0) return;
+  currentMission = missionSelected;
+  document.getElementById('mission-screen').style.display = 'none';
+  document.getElementById('game-header').style.display = 'flex';
+  document.getElementById('game-container').style.display = 'flex';
+  init();
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+  setTimeout(fitToScreen, 0);
+}
+
 function returnToMenu() {
   gameOver = true;
   cancelAnimationFrame(loopId);
@@ -2328,6 +2703,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.8.0</div>
+<div id="version-label">v0.9.0</div>
 </body>
 </html>
