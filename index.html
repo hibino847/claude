@@ -15,7 +15,6 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   height: 100vh;
   user-select: none;
 }
@@ -1255,11 +1254,15 @@ function fitToScreen() {
   const scaleY = window.innerHeight / contentH;
   const s = Math.min(scaleX, scaleY, 1);
   wrapper.style.transform = 'scale(' + s + ')';
+  // scale後のレイアウト補正（transform はレイアウトサイズを変えないため）
+  const scaledH = contentH * s;
+  wrapper.style.marginBottom = -(contentH - scaledH) + 'px';
+  wrapper.style.marginTop = Math.max(0, (window.innerHeight - scaledH) / 2) + 'px';
 }
 
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.4.1</div>
+<div id="version-label">v0.4.2</div>
 </body>
 </html>
