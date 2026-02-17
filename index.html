@@ -479,6 +479,176 @@ canvas {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
 
+/* 強化画面 */
+#enhance-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #1a1a30, #0d0d1a);
+  border: 2px solid #aa5aee;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+#enhance-screen h2 {
+  font-size: 28px;
+  color: #aa5aee;
+  margin-bottom: 6px;
+}
+
+#enhance-crystal-display {
+  font-size: 16px;
+  color: #ffcc44;
+  margin-bottom: 16px;
+}
+
+#enhance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+
+.enhance-card {
+  width: 140px;
+  padding: 10px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  color: #e0ffe0;
+}
+
+.enhance-card:hover {
+  border-color: #aa5aee;
+  background: rgba(170, 90, 238, 0.1);
+}
+
+.enhance-card.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.enhance-card .enh-icon {
+  font-size: 30px;
+  margin-bottom: 2px;
+}
+
+.enhance-card .enh-name {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.enhance-card .enh-level {
+  font-size: 11px;
+  color: #ffcc44;
+  margin-top: 2px;
+}
+
+.enhance-card .enh-level-bar {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.enhance-card .enh-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #333;
+  border: 1px solid #555;
+}
+
+.enhance-card .enh-pip.filled {
+  background: #aa5aee;
+  border-color: #cc7aff;
+}
+
+#enhance-detail {
+  display: none;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #aa5aee;
+  border-radius: 10px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  width: 500px;
+  text-align: center;
+}
+
+#enhance-detail h3 {
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+#enhance-detail .enh-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+#enhance-detail .enh-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+#enhance-detail .enh-stat-label {
+  color: #a0c090;
+  font-size: 11px;
+}
+
+#enhance-detail .enh-stat-arrow {
+  color: #44ff44;
+}
+
+#enhance-do-btn {
+  padding: 8px 24px;
+  background: linear-gradient(180deg, #6a2a8a, #4a1a5a);
+  border: 2px solid #aa5aee;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+#enhance-do-btn:hover {
+  background: linear-gradient(180deg, #7a3a9a, #6a2a8a);
+  box-shadow: 0 0 12px rgba(170, 90, 238, 0.4);
+}
+
+#enhance-do-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#enhance-back-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#enhance-back-btn:hover {
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
 /* モバイル対応 */
 @media (max-width: 959px) {
   body {
@@ -529,6 +699,43 @@ canvas {
 
   .job-pick-btn .pick-name {
     font-size: 11px;
+  }
+
+  #enhance-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 20px 0;
+  }
+
+  #enhance-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .enhance-card {
+    width: auto;
+    min-width: 0;
+    padding: 8px 4px;
+  }
+
+  .enhance-card .enh-icon {
+    font-size: 24px;
+  }
+
+  .enhance-card .enh-name {
+    font-size: 11px;
+  }
+
+  .enhance-card .enh-pip {
+    width: 6px;
+    height: 6px;
+  }
+
+  #enhance-detail {
+    width: 90%;
+    padding: 12px 10px;
   }
 
   #game-header {
@@ -625,6 +832,7 @@ canvas {
 
 <div id="menu-screen">
   <h1>伝説のまもりびと</h1>
+  <div id="menu-crystal" style="font-size:16px; color:#ffcc44; margin-bottom:20px;">💎 結晶: <span id="menu-crystal-count">50</span></div>
   <div id="menu-buttons">
     <button class="menu-btn btn-sortie" onclick="startSortie()">
       <span class="menu-btn-icon">⚔️</span>出動
@@ -632,7 +840,7 @@ canvas {
     <button class="menu-btn btn-formation" onclick="openFormation()">
       <span class="menu-btn-icon">📋</span>編成
     </button>
-    <button class="menu-btn btn-enhance" disabled>
+    <button class="menu-btn btn-enhance" onclick="openEnhance()">
       <span class="menu-btn-icon">💎</span>強化
     </button>
     <button class="menu-btn btn-jobchange" disabled>
@@ -646,6 +854,14 @@ canvas {
   <div id="formation-grid"></div>
   <div id="job-picker"></div>
   <button id="formation-back-btn" onclick="closeFormation()">決定</button>
+</div>
+
+<div id="enhance-screen">
+  <h2>強化</h2>
+  <div id="enhance-crystal-display">💎 結晶: <span id="enhance-crystal-count">0</span></div>
+  <div id="enhance-grid"></div>
+  <div id="enhance-detail"></div>
+  <button id="enhance-back-btn" onclick="closeEnhance()">戻る</button>
 </div>
 
 <div id="game-header" style="display: none;">
@@ -684,6 +900,7 @@ canvas {
     <h2>敗北...</h2>
     <p>Wave <span id="final-wave">0</span> まで到達</p>
     <p>スコア: <span id="final-score">0</span></p>
+    <p style="color:#ffcc44;">💎 +<span id="defeat-reward">0</span> 結晶</p>
     <button id="restart-btn" onclick="restartGame()">もう一度挑戦</button>
     <button id="menu-btn" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
@@ -692,6 +909,7 @@ canvas {
     <h2>勝利！</h2>
     <p>全Waveを制覇！</p>
     <p>スコア: <span id="final-score2">0</span></p>
+    <p style="color:#ffcc44;">💎 +<span id="victory-reward">0</span> 結晶</p>
     <button id="restart-btn2" onclick="restartGame()">もう一度挑戦</button>
     <button id="menu-btn2" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
@@ -747,6 +965,19 @@ const ALLY_DEFS = [
 let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 聖騎士
 const SLOT_LABELS = ['前列・上', '後列・上', '前列・下', '後列・下'];
 
+// 永続データ（強化）
+let crystals = 50; // 結晶（永続通貨）初期50個
+let enhanceLevels = new Array(ALLY_DEFS.length).fill(0); // 各職業の強化Lv (最大10)
+const ENHANCE_MAX = 10;
+
+function getEnhanceCost(lv) {
+  return 10 + lv * 15;
+}
+
+function getEnhanceBonus(lv) {
+  return { damageMult: 1 + lv * 0.1, rangePlus: lv * 5, speedMult: 1 - lv * 0.03 };
+}
+
 // ===== ゲーム状態 =====
 let gold, wave, score, gameSpeed;
 let core;
@@ -776,20 +1007,22 @@ function init() {
   gameOver = false;
   victory = false;
 
-  // 編成に従って味方4人を配置
+  // 編成に従って味方4人を配置（強化ボーナス適用）
   for (let i = 0; i < formation.length; i++) {
-    const def = ALLY_DEFS[formation[i]];
+    const defIdx = formation[i];
+    const def = ALLY_DEFS[defIdx];
     const pos = ALLY_POSITIONS[i];
+    const bonus = getEnhanceBonus(enhanceLevels[defIdx]);
     allies.push({
-      type: formation[i],
+      type: defIdx,
       name: def.name,
       icon: def.icon,
       x: pos.x,
       y: pos.y,
       level: 1,
-      damage: def.damage,
-      range: def.range,
-      speed: def.speed,
+      damage: def.damage * bonus.damageMult,
+      range: def.range + bonus.rangePlus,
+      speed: def.speed * bonus.speedMult,
       color: def.color,
       splash: def.splash || 0,
       slow: def.slow || 0,
@@ -1055,7 +1288,10 @@ function update(dt) {
 
     if (wave >= MAX_WAVE) {
       victory = true;
+      const reward = Math.floor(wave * 3 + score * 0.02);
+      crystals += reward;
       document.getElementById('final-score2').textContent = score;
+      document.getElementById('victory-reward').textContent = reward;
       document.getElementById('victory-overlay').style.display = 'flex';
     }
   }
@@ -1085,9 +1321,12 @@ function update(dt) {
         if (core.hp <= 0) {
           core.hp = 0;
           gameOver = true;
+          const reward = Math.floor(wave * 2 + score * 0.01);
+          crystals += reward;
           document.getElementById('final-wave').textContent = wave;
           document.getElementById('final-score').textContent = score;
           document.getElementById('game-over-overlay').style.display = 'flex';
+          document.getElementById('defeat-reward').textContent = reward;
         }
         updateHUD();
       }
@@ -1580,12 +1819,114 @@ function pickJob(jobIdx) {
   renderFormation();
 }
 
+// ===== 強化画面 =====
+let enhanceSelected = -1;
+
+function openEnhance() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('enhance-screen').style.display = 'flex';
+  enhanceSelected = -1;
+  renderEnhance();
+  setTimeout(fitToScreen, 0);
+}
+
+function closeEnhance() {
+  document.getElementById('enhance-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+  updateMenuCrystal();
+  setTimeout(fitToScreen, 0);
+}
+
+function updateMenuCrystal() {
+  document.getElementById('menu-crystal-count').textContent = crystals;
+}
+
+function renderEnhance() {
+  document.getElementById('enhance-crystal-count').textContent = crystals;
+  const grid = document.getElementById('enhance-grid');
+  grid.innerHTML = '';
+  for (let j = 0; j < ALLY_DEFS.length; j++) {
+    const def = ALLY_DEFS[j];
+    const lv = enhanceLevels[j];
+    const card = document.createElement('div');
+    card.className = 'enhance-card' + (enhanceSelected === j ? ' selected' : '');
+    card.onclick = () => { enhanceSelected = (enhanceSelected === j) ? -1 : j; renderEnhance(); };
+    let pips = '';
+    for (let p = 0; p < ENHANCE_MAX; p++) {
+      pips += '<div class="enh-pip' + (p < lv ? ' filled' : '') + '"></div>';
+    }
+    card.innerHTML =
+      '<div class="enh-icon">' + def.icon + '</div>' +
+      '<div class="enh-name">' + def.name + '</div>' +
+      '<div class="enh-level">強化Lv.' + lv + '</div>' +
+      '<div class="enh-level-bar">' + pips + '</div>';
+    grid.appendChild(card);
+  }
+  renderEnhanceDetail();
+}
+
+function renderEnhanceDetail() {
+  const detail = document.getElementById('enhance-detail');
+  if (enhanceSelected < 0) {
+    detail.style.display = 'none';
+    return;
+  }
+  detail.style.display = 'block';
+  const j = enhanceSelected;
+  const def = ALLY_DEFS[j];
+  const lv = enhanceLevels[j];
+  const cur = getEnhanceBonus(lv);
+  const maxed = lv >= ENHANCE_MAX;
+  const cost = maxed ? 0 : getEnhanceCost(lv);
+  const nxt = maxed ? cur : getEnhanceBonus(lv + 1);
+
+  const dmgCur = Math.round(def.damage * cur.damageMult);
+  const rngCur = Math.round(def.range + cur.rangePlus);
+  const spdCur = (def.speed * cur.speedMult).toFixed(2);
+  const dmgNxt = Math.round(def.damage * nxt.damageMult);
+  const rngNxt = Math.round(def.range + nxt.rangePlus);
+  const spdNxt = (def.speed * nxt.speedMult).toFixed(2);
+
+  let statsHtml =
+    '<div class="enh-stats">' +
+      '<div class="enh-stat-item"><div class="enh-stat-label">攻撃力</div><div>' + dmgCur +
+        (maxed ? '' : ' <span class="enh-stat-arrow">→ ' + dmgNxt + '</span>') + '</div></div>' +
+      '<div class="enh-stat-item"><div class="enh-stat-label">射程</div><div>' + rngCur +
+        (maxed ? '' : ' <span class="enh-stat-arrow">→ ' + rngNxt + '</span>') + '</div></div>' +
+      '<div class="enh-stat-item"><div class="enh-stat-label">速度</div><div>' + spdCur + 's' +
+        (maxed ? '' : ' <span class="enh-stat-arrow">→ ' + spdNxt + 's</span>') + '</div></div>' +
+    '</div>';
+
+  let btnHtml = maxed
+    ? '<div style="color:#ffcc44;font-size:14px;font-weight:bold;">MAX</div>'
+    : '<button id="enhance-do-btn" onclick="doEnhance()"' +
+      (crystals < cost ? ' disabled' : '') +
+      '>強化する (💎' + cost + ')</button>';
+
+  detail.innerHTML =
+    '<h3>' + def.icon + ' ' + def.name + ' Lv.' + lv + (maxed ? ' MAX' : '') + '</h3>' +
+    statsHtml + btnHtml;
+}
+
+function doEnhance() {
+  if (enhanceSelected < 0) return;
+  const j = enhanceSelected;
+  const lv = enhanceLevels[j];
+  if (lv >= ENHANCE_MAX) return;
+  const cost = getEnhanceCost(lv);
+  if (crystals < cost) return;
+  crystals -= cost;
+  enhanceLevels[j]++;
+  renderEnhance();
+}
+
 function returnToMenu() {
   gameOver = true;
   cancelAnimationFrame(loopId);
   document.getElementById('game-header').style.display = 'none';
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
+  updateMenuCrystal();
   setTimeout(fitToScreen, 0);
 }
 
@@ -1622,6 +1963,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.5.3</div>
+<div id="version-label">v0.6.0</div>
 </body>
 </html>
