@@ -1022,6 +1022,178 @@ canvas {
   background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
 }
 
+/* 転職画面 */
+#jobchange-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #1a0a2a, #0d0020);
+  border: 2px solid #aa44ff;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+#jobchange-screen h2 {
+  font-size: 28px;
+  color: #cc66ff;
+  margin-bottom: 12px;
+}
+
+#jobchange-crystal-display {
+  font-size: 14px;
+  color: #ffcc44;
+  margin-bottom: 16px;
+}
+
+#jobchange-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+
+.jc-card {
+  width: 180px;
+  padding: 12px 8px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #553388;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  color: #e0d0ff;
+}
+
+.jc-card:hover {
+  border-color: #aa44ff;
+  background: rgba(170, 68, 255, 0.1);
+  transform: scale(1.03);
+}
+
+.jc-card.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+}
+
+.jc-card.locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.jc-card.locked:hover {
+  transform: none;
+  border-color: #553388;
+  background: rgba(0,0,0,0.4);
+}
+
+.jc-card.passed {
+  border-color: #44ff44;
+}
+
+.jc-card.changed {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.jc-card .jc-icon { font-size: 28px; margin-bottom: 4px; }
+.jc-card .jc-name { font-size: 13px; font-weight: bold; }
+.jc-card .jc-base { font-size: 10px; color: #a090c0; margin-top: 2px; }
+.jc-card .jc-status { font-size: 10px; margin-top: 4px; }
+
+#jobchange-detail {
+  display: none;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #aa44ff;
+  border-radius: 10px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  width: 560px;
+  text-align: center;
+}
+
+#jobchange-detail h3 {
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+.jc-compare {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.jc-compare-col {
+  text-align: center;
+}
+
+.jc-compare-col h4 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.jc-compare-col .jc-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+
+.jc-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  color: #ffcc44;
+}
+
+#jobchange-action {
+  margin: 8px 0;
+}
+
+#jobchange-action button {
+  padding: 10px 30px;
+  border-radius: 8px;
+  border: 2px solid #aa44ff;
+  background: linear-gradient(180deg, #6622aa, #441177);
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  margin: 0 6px;
+}
+
+#jobchange-action button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #8833cc, #6622aa);
+}
+
+#jobchange-action button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#jobchange-back-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+}
+
+#jobchange-back-btn:hover {
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
 /* モバイル対応 */
 @media (max-width: 959px) {
   body {
@@ -1175,6 +1347,28 @@ canvas {
     padding: 6px 8px;
   }
 
+  #jobchange-screen {
+    width: 760px;
+    height: auto;
+    min-height: 480px;
+    padding: 16px 0;
+  }
+
+  #jobchange-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 10px;
+  }
+
+  .jc-card {
+    width: auto;
+    padding: 10px 8px;
+  }
+
+  #jobchange-detail {
+    width: 90%;
+    padding: 12px 10px;
+  }
+
   #game-header {
     width: 760px;
   }
@@ -1278,7 +1472,7 @@ canvas {
     <button class="menu-btn btn-enhance" onclick="openEnhance()">
       <span class="menu-btn-icon">💎</span>強化
     </button>
-    <button class="menu-btn btn-jobchange" disabled>
+    <button class="menu-btn btn-jobchange" onclick="openJobChange()">
       <span class="menu-btn-icon">🔄</span>転職
     </button>
   </div>
@@ -1313,6 +1507,15 @@ canvas {
   <div id="mission-detail"></div>
   <button id="mission-start-btn" onclick="startMission()" disabled>出撃</button>
   <button id="mission-back-btn" onclick="closeMission()">戻る</button>
+</div>
+
+<div id="jobchange-screen">
+  <h2>試験 & 転職</h2>
+  <div id="jobchange-crystal-display">💎 結晶: <span id="jobchange-crystal-count">0</span></div>
+  <div id="jobchange-grid"></div>
+  <div id="jobchange-detail"></div>
+  <div id="jobchange-action"></div>
+  <button id="jobchange-back-btn" onclick="closeJobChange()">戻る</button>
 </div>
 
 <div id="game-header" style="display: none;">
@@ -1415,6 +1618,32 @@ const ALLY_DEFS = [
   { name: '踊り子', icon: '💃', damage: 8, range: 160, speed: 1.2, maxHp: 70, color: '#ee55aa',
     desc: '攻撃＋全体スロー付与', splash: 80, slow: 0.2 },
 ];
+
+// 上位職定義 (転職先)
+// baseJob: 元の職業インデックス, reqLevel: 必要レベル, examCost: 試験費用(結晶)
+const ADVANCED_DEFS = [
+  { name: '剣聖', icon: '🗡️', damage: 35, range: 100, speed: 0.7, maxHp: 200, color: '#ff2222',
+    desc: '極限の剣技を極めし者', baseJob: 0, reqLevel: 10, examCost: 40 },
+  { name: '弓聖', icon: '🎯', damage: 22, range: 280, speed: 0.8, maxHp: 100, color: '#22ee22',
+    desc: '神域の弓を持つ射手', baseJob: 1, reqLevel: 10, examCost: 40 },
+  { name: '大魔導士', icon: '🌟', damage: 30, range: 220, speed: 1.3, maxHp: 90, color: '#aa44ff',
+    desc: '全てを焼き尽くす大魔法', baseJob: 2, reqLevel: 10, examCost: 50, splash: 90, slow: 0.4 },
+  { name: '聖王', icon: '👑', damage: 22, range: 120, speed: 0.9, maxHp: 350, color: '#ffdd00',
+    desc: '不滅の盾を持つ王者', baseJob: 3, reqLevel: 10, examCost: 50 },
+  { name: '影忍', icon: '🌑', damage: 18, range: 140, speed: 0.3, maxHp: 120, color: '#8844cc',
+    desc: '影から瞬殺する暗殺者', baseJob: 4, reqLevel: 10, examCost: 45 },
+  { name: '竜騎士', icon: '🐉', damage: 28, range: 160, speed: 0.9, maxHp: 180, color: '#ee8833',
+    desc: '竜の力を得た突撃兵', baseJob: 5, reqLevel: 10, examCost: 45, splash: 60 },
+  { name: '魔弾の射手', icon: '💥', damage: 70, range: 350, speed: 2.2, maxHp: 75, color: '#11aaaa',
+    desc: '必中の魔弾を放つ', baseJob: 6, reqLevel: 10, examCost: 55 },
+  { name: '神楽巫女', icon: '🌸', damage: 14, range: 200, speed: 1.0, maxHp: 90, color: '#ff66cc',
+    desc: '神の加護で全体弱体化', baseJob: 7, reqLevel: 10, examCost: 50, splash: 120, slow: 0.35 },
+];
+
+// 転職状態: 各上位職の合格フラグ
+let examPassed = new Array(ADVANCED_DEFS.length).fill(false);
+// 各基本職が転職済みかどうか (転職後はALLY_DEFS内の該当職を上位職ステータスに差し替え)
+let jobChanged = new Array(ALLY_DEFS.length).fill(false);
 
 // 編成データ（各スロットの職業インデックス）
 let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 聖騎士
@@ -2739,6 +2968,167 @@ function startMission() {
   setTimeout(fitToScreen, 0);
 }
 
+// ===== 転職画面 =====
+let jcSelected = -1; // 選択中の上位職インデックス
+
+function openJobChange() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('jobchange-screen').style.display = 'flex';
+  jcSelected = -1;
+  renderJobChange();
+  setTimeout(fitToScreen, 0);
+}
+
+function closeJobChange() {
+  document.getElementById('jobchange-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+  updateMenuCrystal();
+  setTimeout(fitToScreen, 0);
+}
+
+function renderJobChange() {
+  document.getElementById('jobchange-crystal-count').textContent = crystals;
+  const grid = document.getElementById('jobchange-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < ADVANCED_DEFS.length; i++) {
+    const adv = ADVANCED_DEFS[i];
+    const baseDef = ALLY_DEFS[adv.baseJob];
+    const lv = allyLevels[adv.baseJob];
+    const canExam = lv >= adv.reqLevel;
+    const passed = examPassed[i];
+    const changed = jobChanged[adv.baseJob];
+
+    const card = document.createElement('div');
+    let cls = 'jc-card';
+    if (changed) cls += ' changed';
+    else if (passed) cls += ' passed';
+    else if (!canExam) cls += ' locked';
+    if (jcSelected === i) cls += ' selected';
+    card.className = cls;
+    card.onclick = () => { jcSelected = i; renderJobChange(); };
+
+    let statusText = '';
+    let statusColor = '#888';
+    if (changed) { statusText = '転職済み'; statusColor = '#ffd700'; }
+    else if (passed) { statusText = '合格済み'; statusColor = '#44ff44'; }
+    else if (canExam) { statusText = '受験可能'; statusColor = '#aa44ff'; }
+    else { statusText = 'Lv.' + adv.reqLevel + ' 必要'; statusColor = '#ff6666'; }
+
+    card.innerHTML =
+      '<div class="jc-icon">' + adv.icon + '</div>' +
+      '<div class="jc-name">' + adv.name + '</div>' +
+      '<div class="jc-base">' + baseDef.icon + ' ' + baseDef.name + ' Lv.' + lv + '</div>' +
+      '<div class="jc-status" style="color:' + statusColor + ';">' + statusText + '</div>';
+    grid.appendChild(card);
+  }
+
+  renderJobChangeDetail();
+}
+
+function renderJobChangeDetail() {
+  const detail = document.getElementById('jobchange-detail');
+  const action = document.getElementById('jobchange-action');
+
+  if (jcSelected < 0) {
+    detail.style.display = 'none';
+    action.innerHTML = '';
+    return;
+  }
+
+  detail.style.display = 'block';
+  const adv = ADVANCED_DEFS[jcSelected];
+  const baseDef = ALLY_DEFS[adv.baseJob];
+  const lv = allyLevels[adv.baseJob];
+  const canExam = lv >= adv.reqLevel;
+  const passed = examPassed[jcSelected];
+  const changed = jobChanged[adv.baseJob];
+
+  // ステータス比較
+  detail.innerHTML =
+    '<h3>' + adv.icon + ' ' + adv.name + '</h3>' +
+    '<div style="font-size:12px; color:#c0b0e0; margin-bottom:8px;">' + adv.desc + '</div>' +
+    '<div class="jc-compare">' +
+      '<div class="jc-compare-col">' +
+        '<h4 style="color:#aaa;">' + baseDef.icon + ' ' + baseDef.name + '</h4>' +
+        '<div class="jc-stat"><span>攻撃力</span> <span>' + baseDef.damage + '</span></div>' +
+        '<div class="jc-stat"><span>射程</span> <span>' + baseDef.range + '</span></div>' +
+        '<div class="jc-stat"><span>速度</span> <span>' + baseDef.speed.toFixed(2) + 's</span></div>' +
+        '<div class="jc-stat"><span>HP</span> <span>' + baseDef.maxHp + '</span></div>' +
+      '</div>' +
+      '<div class="jc-arrow">→</div>' +
+      '<div class="jc-compare-col">' +
+        '<h4 style="color:#ffd700;">' + adv.icon + ' ' + adv.name + '</h4>' +
+        '<div class="jc-stat"><span>攻撃力</span> <span style="color:' + (adv.damage > baseDef.damage ? '#44ff44' : '#ff6666') + ';">' + adv.damage + '</span></div>' +
+        '<div class="jc-stat"><span>射程</span> <span style="color:' + (adv.range > baseDef.range ? '#44ff44' : '#ff6666') + ';">' + adv.range + '</span></div>' +
+        '<div class="jc-stat"><span>速度</span> <span style="color:' + (adv.speed < baseDef.speed ? '#44ff44' : adv.speed > baseDef.speed ? '#ff6666' : '#fff') + ';">' + adv.speed.toFixed(2) + 's</span></div>' +
+        '<div class="jc-stat"><span>HP</span> <span style="color:' + (adv.maxHp > baseDef.maxHp ? '#44ff44' : '#ff6666') + ';">' + adv.maxHp + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    (canExam && !passed ? '<div style="font-size:12px; color:#ffcc44;">試験費用: 💎 ' + adv.examCost + ' 結晶</div>' : '') +
+    (passed && !changed ? '<div style="font-size:12px; color:#44ff44;">試験合格済み！転職可能です</div>' : '');
+
+  // アクションボタン
+  let actionHtml = '';
+  if (changed) {
+    actionHtml = '<div style="color:#ffd700; font-size:14px; font-weight:bold;">転職完了済み</div>';
+  } else if (passed) {
+    actionHtml = '<button onclick="doJobChange(' + jcSelected + ')">転職する</button>';
+  } else if (canExam) {
+    const canAfford = crystals >= adv.examCost;
+    actionHtml = '<button onclick="takeExam(' + jcSelected + ')"' + (canAfford ? '' : ' disabled') + '>試験を受ける (💎' + adv.examCost + ')</button>';
+    if (!canAfford) actionHtml += '<div style="color:#ff6666; font-size:11px; margin-top:4px;">結晶が足りません</div>';
+  } else {
+    actionHtml = '<div style="color:#ff6666; font-size:12px;">' + baseDef.name + ' をLv.' + adv.reqLevel + ' にする必要があります (現在 Lv.' + lv + ')</div>';
+  }
+  action.innerHTML = actionHtml;
+}
+
+function takeExam(advIdx) {
+  const adv = ADVANCED_DEFS[advIdx];
+  if (crystals < adv.examCost) return;
+  if (allyLevels[adv.baseJob] < adv.reqLevel) return;
+  if (examPassed[advIdx]) return;
+
+  crystals -= adv.examCost;
+  // 試験: 成功率はレベル依存 (Lv10で60%, Lv20で80%, Lv30で100%)
+  const lv = allyLevels[adv.baseJob];
+  const rate = Math.min(100, 40 + lv * 2);
+  const roll = Math.random() * 100;
+
+  if (roll < rate) {
+    examPassed[advIdx] = true;
+    alert(adv.name + ' の試験に合格しました！ (成功率: ' + rate + '%)');
+  } else {
+    alert(adv.name + ' の試験に失敗... (成功率: ' + rate + '%)  費用は消費されました。');
+  }
+
+  renderJobChange();
+}
+
+function doJobChange(advIdx) {
+  const adv = ADVANCED_DEFS[advIdx];
+  if (!examPassed[advIdx]) return;
+  if (jobChanged[adv.baseJob]) return;
+
+  // 基本職のステータスを上位職に差し替え
+  const base = ALLY_DEFS[adv.baseJob];
+  base.name = adv.name;
+  base.icon = adv.icon;
+  base.damage = adv.damage;
+  base.range = adv.range;
+  base.speed = adv.speed;
+  base.maxHp = adv.maxHp;
+  base.color = adv.color;
+  base.desc = adv.desc;
+  if (adv.splash) base.splash = adv.splash;
+  if (adv.slow) base.slow = adv.slow;
+
+  jobChanged[adv.baseJob] = true;
+  alert(ALLY_DEFS[adv.baseJob].name + ' に転職しました！');
+  renderJobChange();
+}
+
 function returnToMenu() {
   gameOver = true;
   cancelAnimationFrame(loopId);
@@ -2782,6 +3172,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.10.0</div>
+<div id="version-label">v0.11.0</div>
 </body>
 </html>
