@@ -486,6 +486,7 @@ canvas {
     min-height: 100vh;
     overflow-x: hidden;
     overflow-y: auto;
+    align-items: flex-start;
   }
 
   #menu-screen {
@@ -1592,19 +1593,22 @@ function returnToMenu() {
 function fitToScreen() {
   const wrapper = document.getElementById('app-wrapper');
   const isMobile = window.innerWidth < 960;
-  const contentW = isMobile ? 760 : 960;
-  const scaleX = window.innerWidth / contentW;
 
   if (isMobile) {
-    const s = scaleX;
-    wrapper.style.transform = 'scale(' + s + ')';
-    wrapper.style.transformOrigin = 'top center';
-    wrapper.style.marginTop = '0';
-    // scrollHeightからレイアウト補正
+    // 一旦transformをリセットして実際の幅・高さを計測
+    wrapper.style.transform = 'none';
+    wrapper.style.marginBottom = '0';
+    const actualW = wrapper.scrollWidth;
     const actualH = wrapper.scrollHeight;
+    const s = window.innerWidth / actualW;
+    wrapper.style.transform = 'scale(' + s + ')';
+    wrapper.style.transformOrigin = 'top left';
+    wrapper.style.marginTop = '0';
     wrapper.style.marginBottom = -(actualH - actualH * s) + 'px';
   } else {
+    const contentW = 960;
     const contentH = 640;
+    const scaleX = window.innerWidth / contentW;
     const scaleY = window.innerHeight / contentH;
     const s = Math.min(scaleX, scaleY, 1);
     wrapper.style.transform = 'scale(' + s + ')';
@@ -1618,6 +1622,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.5.2</div>
+<div id="version-label">v0.5.3</div>
 </body>
 </html>
