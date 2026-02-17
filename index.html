@@ -153,47 +153,6 @@ canvas {
   margin: 2px 0;
 }
 
-#upgrade-btn {
-  padding: 6px;
-  border: 1px solid;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  font-family: inherit;
-  margin-top: 4px;
-  background: rgba(0, 150, 0, 0.3);
-  border-color: #00aa00;
-  color: #88ff88;
-  width: 100%;
-}
-
-#upgrade-btn:hover { background: rgba(0, 150, 0, 0.5); }
-#upgrade-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-#wave-btn {
-  padding: 10px;
-  background: linear-gradient(180deg, #aa4400, #883300);
-  border: 2px solid #ff8800;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
-  margin-top: auto;
-  transition: all 0.2s;
-}
-
-#wave-btn:hover {
-  background: linear-gradient(180deg, #cc5500, #aa4400);
-  box-shadow: 0 0 15px rgba(255, 136, 0, 0.4);
-}
-
-#wave-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .speed-btn {
   padding: 4px 8px;
   background: rgba(74, 138, 42, 0.3);
@@ -804,11 +763,6 @@ canvas {
     width: 100%;
   }
 
-  #wave-btn {
-    width: 100%;
-    margin-top: 4px;
-  }
-
   #game-over-overlay, #victory-overlay {
     width: 760px;
     height: 600px;
@@ -867,13 +821,13 @@ canvas {
 <div id="game-header" style="display: none;">
   <h1>伝説のまもりびと</h1>
   <div class="hud-info">
-    <span><span class="gold-icon">&#x2B50;</span> <span id="gold">100</span>G</span>
     <span><span class="life-icon">&#x2764;</span> <span id="core-hp">500</span>/<span id="core-max-hp">500</span></span>
     <span><span class="wave-icon">&#x2694;</span> Wave <span id="wave">0</span>/<span id="max-wave">30</span></span>
     <span>Score: <span id="score">0</span></span>
     <span>
       <button class="speed-btn active" onclick="setSpeed(1)">x1</button>
       <button class="speed-btn" onclick="setSpeed(2)">x2</button>
+      <button class="speed-btn" onclick="setSpeed(3)">x3</button>
     </span>
   </div>
 </div>
@@ -886,14 +840,14 @@ canvas {
 
     <div id="ally-info">
       <h4 id="info-name"></h4>
-      <div class="stat"><span>レベル</span><span id="info-level"></span></div>
       <div class="stat"><span>攻撃力</span><span id="info-damage"></span></div>
       <div class="stat"><span>射程</span><span id="info-range"></span></div>
       <div class="stat"><span>速度</span><span id="info-speed"></span></div>
-      <button id="upgrade-btn" onclick="upgradeAlly()">強化 (<span id="upgrade-cost"></span>G)</button>
     </div>
 
-    <button id="wave-btn" onclick="startWave()">次のWaveへ ⚔️</button>
+    <div id="auto-status" style="text-align:center; padding:8px; color:#ffcc44; font-size:13px; font-weight:bold;">
+      ⚔️ 自動戦闘中...
+    </div>
   </div>
 
   <div id="game-over-overlay">
@@ -979,7 +933,7 @@ function getEnhanceBonus(lv) {
 }
 
 // ===== ゲーム状態 =====
-let gold, wave, score, gameSpeed;
+let wave, score, gameSpeed, waveDelay;
 let core;
 let allies, enemies, projectiles, particles;
 let selectedAlly;
@@ -990,10 +944,10 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 function init() {
-  gold = 100;
   wave = 0;
   score = 0;
   gameSpeed = 1;
+  waveDelay = 0; // Wave間の待ち時間カウンタ
   core = { hp: CORE_MAX_HP, maxHp: CORE_MAX_HP };
   allies = [];
   enemies = [];
@@ -1019,7 +973,6 @@ function init() {
       icon: def.icon,
       x: pos.x,
       y: pos.y,
-      level: 1,
       damage: def.damage * bonus.damageMult,
       range: def.range + bonus.rangePlus,
       speed: def.speed * bonus.speedMult,
@@ -1027,7 +980,6 @@ function init() {
       splash: def.splash || 0,
       slow: def.slow || 0,
       cooldown: 0,
-      totalSpent: 0,
       angle: Math.PI,
       attackAnim: 0,
     });
@@ -1035,9 +987,11 @@ function init() {
 
   document.getElementById('game-over-overlay').style.display = 'none';
   document.getElementById('victory-overlay').style.display = 'none';
-  document.getElementById('wave-btn').disabled = false;
   buildAllyButtons();
   updateHUD();
+
+  // 戦闘オート: 最初のWaveを自動開始
+  waveDelay = 1.5;
 }
 
 // ===== UIボタン生成 =====
@@ -1068,7 +1022,6 @@ function selectAlly(idx) {
 
 // ===== HUD更新 =====
 function updateHUD() {
-  document.getElementById('gold').textContent = gold;
   document.getElementById('core-hp').textContent = Math.ceil(core.hp);
   document.getElementById('core-max-hp').textContent = core.maxHp;
   document.getElementById('wave').textContent = wave;
@@ -1085,40 +1038,9 @@ function updateAllyInfo() {
   const a = selectedAlly;
   panel.style.display = 'block';
   document.getElementById('info-name').textContent = `${a.icon} ${a.name}`;
-  document.getElementById('info-level').textContent = a.level;
   document.getElementById('info-damage').textContent = Math.round(a.damage);
   document.getElementById('info-range').textContent = Math.round(a.range) + 'px';
   document.getElementById('info-speed').textContent = a.speed.toFixed(2) + 's';
-
-  const cost = getUpgradeCost(a);
-  document.getElementById('upgrade-cost').textContent = cost;
-  const btn = document.getElementById('upgrade-btn');
-  btn.style.display = a.level >= 10 ? 'none' : 'block';
-  btn.disabled = gold < cost;
-}
-
-function getUpgradeCost(a) {
-  return Math.floor(30 + a.level * 20);
-}
-
-function upgradeAlly() {
-  if (!selectedAlly || selectedAlly.level >= 10) return;
-  const cost = getUpgradeCost(selectedAlly);
-  if (gold < cost) return;
-  gold -= cost;
-  const a = selectedAlly;
-  a.level++;
-  a.damage *= 1.25;
-  a.range += 10;
-  a.speed *= 0.95;
-  if (a.splash > 0) a.splash += 5;
-  if (a.slow > 0) a.slow = Math.min(a.slow + 0.03, 0.6);
-  a.totalSpent += cost;
-  updateHUD();
-  updateAllyInfo();
-  for (let i = 0; i < 8; i++) {
-    particles.push(createParticle(a.x, a.y, '#ffd700'));
-  }
 }
 
 function setSpeed(s) {
@@ -1157,16 +1079,16 @@ canvas.addEventListener('click', (e) => {
   }
 });
 
-// ===== ウェーブ =====
-function startWave() {
+// ===== ウェーブ（オート進行） =====
+function startNextWave() {
   if (waveActive || gameOver || victory) return;
   wave++;
   waveActive = true;
   spawning = true;
   spawnTimer = 0;
-  document.getElementById('wave-btn').disabled = true;
   spawnQueue = generateWave(wave);
   updateHUD();
+  document.getElementById('auto-status').textContent = '⚔️ Wave ' + wave + ' 戦闘中...';
 }
 
 function generateWave(w) {
@@ -1276,15 +1198,20 @@ function update(dt) {
     if (spawnQueue.length === 0) spawning = false;
   }
 
-  // ウェーブ終了チェック
+  // Wave間のディレイ（オート進行）
+  if (waveDelay > 0 && !waveActive && !gameOver && !victory) {
+    waveDelay -= dt;
+    if (waveDelay <= 0) {
+      startNextWave();
+    }
+  }
+
+  // ウェーブ終了チェック → 次Waveを自動開始
   if (waveActive && !spawning && enemies.length === 0) {
     waveActive = false;
-    document.getElementById('wave-btn').disabled = false;
-    gold += 10 + wave * 2;
     // ウェーブ間でコアHP少し回復
     core.hp = Math.min(core.maxHp, core.hp + core.maxHp * 0.05);
     updateHUD();
-    updateAllyInfo();
 
     if (wave >= MAX_WAVE) {
       victory = true;
@@ -1293,6 +1220,10 @@ function update(dt) {
       document.getElementById('final-score2').textContent = score;
       document.getElementById('victory-reward').textContent = reward;
       document.getElementById('victory-overlay').style.display = 'flex';
+    } else {
+      // 次Waveまで短い待機
+      document.getElementById('auto-status').textContent = '🔄 次のWaveへ...';
+      waveDelay = 1.5;
     }
   }
 
@@ -1452,10 +1383,8 @@ function dealDamage(enemy, dmg) {
   enemy.hp -= dmg;
   if (enemy.hp <= 0 && enemy.alive) {
     enemy.alive = false;
-    gold += enemy.gold;
     score += enemy.score;
     updateHUD();
-    updateAllyInfo();
     for (let i = 0; i < 12; i++) {
       particles.push(createParticle(enemy.x, enemy.y, enemy.color));
     }
@@ -1658,15 +1587,6 @@ function render() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(a.icon, drawX, a.y);
-
-    // レベル表示
-    if (a.level > 1) {
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillStyle = '#ffd700';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText('★' + a.level, drawX, a.y - 24);
-    }
 
     // 選択ハイライト
     if (selectedAlly === a) {
@@ -1963,6 +1883,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.6.0</div>
+<div id="version-label">v0.7.0</div>
 </body>
 </html>
