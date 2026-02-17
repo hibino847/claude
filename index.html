@@ -15,8 +15,16 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   height: 100vh;
   user-select: none;
+}
+
+#app-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: top center;
 }
 
 #game-header {
@@ -352,6 +360,8 @@ canvas {
 </head>
 <body>
 
+<div id="app-wrapper">
+
 <div id="menu-screen">
   <h1>伝説のまもりびと</h1>
   <div id="menu-buttons">
@@ -419,6 +429,8 @@ canvas {
     <button id="menu-btn2" onclick="returnToMenu()" style="margin-top:10px;">メニューに戻る</button>
   </div>
 </div>
+
+</div><!-- /app-wrapper -->
 
 <script>
 // ===== ゲーム定数 =====
@@ -1242,6 +1254,20 @@ function returnToMenu() {
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
 }
+
+// ===== 画面フィット =====
+function fitToScreen() {
+  const wrapper = document.getElementById('app-wrapper');
+  const contentW = 960;
+  const contentH = 640;
+  const scaleX = window.innerWidth / contentW;
+  const scaleY = window.innerHeight / contentH;
+  const s = Math.min(scaleX, scaleY, 1);
+  wrapper.style.transform = 'scale(' + s + ')';
+}
+
+window.addEventListener('resize', fitToScreen);
+fitToScreen();
 </script>
 </body>
 </html>
