@@ -356,6 +356,125 @@ canvas {
   box-shadow: none;
 }
 
+/* 編成画面 */
+#formation-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 960px;
+  height: 640px;
+  background: linear-gradient(180deg, #1a3a10, #0d1a0d);
+  border: 2px solid #4a8a2a;
+}
+
+#formation-screen h2 {
+  font-size: 28px;
+  color: #4a9aee;
+  margin-bottom: 30px;
+}
+
+#formation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.formation-slot {
+  width: 200px;
+  padding: 16px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #4a8a2a;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  color: #e0ffe0;
+}
+
+.formation-slot:hover {
+  border-color: #4a9aee;
+  background: rgba(74, 154, 238, 0.15);
+}
+
+.formation-slot.active {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.formation-slot .slot-label {
+  font-size: 11px;
+  color: #a0c090;
+  margin-bottom: 6px;
+}
+
+.formation-slot .slot-icon {
+  font-size: 36px;
+  margin-bottom: 4px;
+}
+
+.formation-slot .slot-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.formation-slot .slot-desc {
+  font-size: 11px;
+  color: #a0c090;
+  margin-top: 4px;
+}
+
+#job-picker {
+  display: none;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.job-pick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(74, 138, 42, 0.3);
+  border: 2px solid #4a8a2a;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #e0ffe0;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.job-pick-btn:hover {
+  background: rgba(74, 138, 42, 0.6);
+  transform: scale(1.05);
+}
+
+.job-pick-btn .pick-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.job-pick-btn .pick-name {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#formation-back-btn {
+  padding: 10px 40px;
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border: 2px solid #6aaa3a;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#formation-back-btn:hover {
+  background: linear-gradient(180deg, #6aaa3a, #4a8a2a);
+}
+
 #version-label {
   position: fixed;
   right: 8px;
@@ -377,7 +496,7 @@ canvas {
     <button class="menu-btn btn-sortie" onclick="startSortie()">
       <span class="menu-btn-icon">⚔️</span>出動
     </button>
-    <button class="menu-btn btn-formation" disabled>
+    <button class="menu-btn btn-formation" onclick="openFormation()">
       <span class="menu-btn-icon">📋</span>編成
     </button>
     <button class="menu-btn btn-enhance" disabled>
@@ -387,6 +506,13 @@ canvas {
       <span class="menu-btn-icon">🔄</span>転職
     </button>
   </div>
+</div>
+
+<div id="formation-screen">
+  <h2>編成</h2>
+  <div id="formation-grid"></div>
+  <div id="job-picker"></div>
+  <button id="formation-back-btn" onclick="closeFormation()">決定</button>
 </div>
 
 <div id="game-header" style="display: none;">
@@ -476,6 +602,10 @@ const ALLY_DEFS = [
     desc: '高耐久の守護者' },
 ];
 
+// 編成データ（各スロットの職業インデックス）
+let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 聖騎士
+const SLOT_LABELS = ['前列・上', '後列・上', '前列・下', '後列・下'];
+
 // ===== ゲーム状態 =====
 let gold, wave, score, gameSpeed;
 let core;
@@ -505,12 +635,12 @@ function init() {
   gameOver = false;
   victory = false;
 
-  // 初期味方4人を配置（2x2グリッド: 上2人、下2人）
-  for (let i = 0; i < ALLY_DEFS.length; i++) {
-    const def = ALLY_DEFS[i];
+  // 編成に従って味方4人を配置
+  for (let i = 0; i < formation.length; i++) {
+    const def = ALLY_DEFS[formation[i]];
     const pos = ALLY_POSITIONS[i];
     allies.push({
-      type: i,
+      type: formation[i],
       name: def.name,
       icon: def.icon,
       x: pos.x,
@@ -1237,6 +1367,75 @@ function startSortie() {
   requestAnimationFrame(gameLoop);
 }
 
+// ===== 編成画面 =====
+let editingSlot = -1;
+
+function openFormation() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('formation-screen').style.display = 'flex';
+  editingSlot = -1;
+  renderFormation();
+}
+
+function closeFormation() {
+  document.getElementById('formation-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+}
+
+function renderFormation() {
+  const grid = document.getElementById('formation-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const def = ALLY_DEFS[formation[i]];
+    const slot = document.createElement('div');
+    slot.className = 'formation-slot' + (editingSlot === i ? ' active' : '');
+    slot.onclick = () => selectSlot(i);
+    slot.innerHTML =
+      '<div class="slot-label">' + SLOT_LABELS[i] + '</div>' +
+      '<div class="slot-icon">' + def.icon + '</div>' +
+      '<div class="slot-name">' + def.name + '</div>' +
+      '<div class="slot-desc">' + def.desc + '</div>';
+    grid.appendChild(slot);
+  }
+  renderJobPicker();
+}
+
+function selectSlot(idx) {
+  editingSlot = (editingSlot === idx) ? -1 : idx;
+  renderFormation();
+}
+
+function renderJobPicker() {
+  const picker = document.getElementById('job-picker');
+  if (editingSlot < 0) {
+    picker.style.display = 'none';
+    return;
+  }
+  picker.style.display = 'flex';
+  picker.innerHTML = '';
+  for (let j = 0; j < ALLY_DEFS.length; j++) {
+    const def = ALLY_DEFS[j];
+    const btn = document.createElement('button');
+    btn.className = 'job-pick-btn';
+    if (formation[editingSlot] === j) {
+      btn.style.borderColor = '#ffd700';
+      btn.style.background = 'rgba(255, 215, 0, 0.2)';
+    }
+    btn.onclick = () => pickJob(j);
+    btn.innerHTML =
+      '<div class="pick-icon">' + def.icon + '</div>' +
+      '<div class="pick-name">' + def.name + '</div>';
+    picker.appendChild(btn);
+  }
+}
+
+function pickJob(jobIdx) {
+  if (editingSlot < 0) return;
+  formation[editingSlot] = jobIdx;
+  editingSlot = -1;
+  renderFormation();
+}
+
 function returnToMenu() {
   gameOver = true;
   cancelAnimationFrame(loopId);
@@ -1263,6 +1462,6 @@ function fitToScreen() {
 window.addEventListener('resize', fitToScreen);
 fitToScreen();
 </script>
-<div id="version-label">v0.4.2</div>
+<div id="version-label">v0.5.0</div>
 </body>
 </html>
