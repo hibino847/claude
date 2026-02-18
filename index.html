@@ -1450,6 +1450,67 @@ canvas {
   pointer-events: none;
   z-index: 9999;
 }
+
+#save-indicator {
+  position: fixed;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  background: rgba(0, 180, 80, 0.85);
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 6px 24px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.5s;
+  letter-spacing: 2px;
+}
+
+#menu-save-area {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+#menu-save-area button {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 2px solid #4a8a2a;
+  background: linear-gradient(180deg, #2d4a1e, #1a2a0a);
+  color: #e0ffe0;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+#menu-save-area button:hover {
+  background: linear-gradient(180deg, #4a8a2a, #2d4a1e);
+  border-color: #6aaa3a;
+}
+
+#menu-save-area .save-delete-btn {
+  border-color: #883333;
+  background: linear-gradient(180deg, #441111, #220808);
+  color: #ff8888;
+  font-size: 11px;
+  padding: 6px 14px;
+}
+
+#menu-save-area .save-delete-btn:hover {
+  background: linear-gradient(180deg, #662222, #441111);
+  border-color: #aa4444;
+}
+
+#save-info {
+  font-size: 11px;
+  color: #a0c090;
+  margin-top: 6px;
+}
 </style>
 </head>
 <body>
@@ -1476,6 +1537,11 @@ canvas {
       <span class="menu-btn-icon">🔄</span>転職
     </button>
   </div>
+  <div id="menu-save-area">
+    <button onclick="manualSave()">💾 セーブ</button>
+    <button class="save-delete-btn" onclick="confirmDeleteSave()">🗑️ データ削除</button>
+  </div>
+  <div id="save-info"></div>
 </div>
 
 <div id="formation-screen">
@@ -1644,6 +1710,116 @@ const ADVANCED_DEFS = [
 let examPassed = new Array(ADVANCED_DEFS.length).fill(false);
 // 各基本職が転職済みかどうか (転職後はALLY_DEFS内の該当職を上位職ステータスに差し替え)
 let jobChanged = new Array(ALLY_DEFS.length).fill(false);
+
+// ===== セーブ/ロード =====
+const SAVE_KEY = 'mamoribito_save';
+
+function saveGame() {
+  const data = {
+    ver: 2,
+    crystals,
+    formation,
+    weapons,
+    enhanceLevels,
+    missionClears,
+    allyLevels,
+    allyXP,
+    examPassed,
+    jobChanged,
+    savedAt: Date.now(),
+  };
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    return true;
+  } catch(e) {
+    console.error('Save failed:', e);
+    return false;
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.ver) return false;
+
+    crystals = data.crystals ?? 50;
+    formation = data.formation ?? [0, 1, 2, 3];
+    weapons = data.weapons ?? [null, null, null, null];
+    enhanceLevels = data.enhanceLevels ?? new Array(ALLY_DEFS.length).fill(0);
+    missionClears = data.missionClears ?? new Array(MISSION_DEFS.length).fill(false);
+    allyLevels = data.allyLevels ?? new Array(ALLY_DEFS.length).fill(1);
+    allyXP = data.allyXP ?? new Array(ALLY_DEFS.length).fill(0);
+    examPassed = data.examPassed ?? new Array(ADVANCED_DEFS.length).fill(false);
+    jobChanged = data.jobChanged ?? new Array(ALLY_DEFS.length).fill(false);
+
+    // 転職済みの職業はALLY_DEFSを上位職データで上書き復元
+    for (let i = 0; i < ADVANCED_DEFS.length; i++) {
+      const adv = ADVANCED_DEFS[i];
+      if (jobChanged[adv.baseJob]) {
+        const base = ALLY_DEFS[adv.baseJob];
+        base.name = adv.name;
+        base.icon = adv.icon;
+        base.damage = adv.damage;
+        base.range = adv.range;
+        base.speed = adv.speed;
+        base.maxHp = adv.maxHp;
+        base.color = adv.color;
+        base.desc = adv.desc;
+        if (adv.splash) base.splash = adv.splash;
+        if (adv.slow) base.slow = adv.slow;
+      }
+    }
+
+    updateMenuCrystal();
+    return true;
+  } catch(e) {
+    console.error('Load failed:', e);
+    return false;
+  }
+}
+
+function deleteSave() {
+  localStorage.removeItem(SAVE_KEY);
+}
+
+function hasSaveData() {
+  return !!localStorage.getItem(SAVE_KEY);
+}
+
+function getSaveInfo() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return {
+      crystals: data.crystals ?? 0,
+      maxLevel: Math.max(...(data.allyLevels || [1])),
+      savedAt: data.savedAt ? new Date(data.savedAt) : null,
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+function autoSave() {
+  saveGame();
+  showSaveIndicator();
+}
+
+function showSaveIndicator() {
+  let ind = document.getElementById('save-indicator');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'save-indicator';
+    document.body.appendChild(ind);
+  }
+  ind.textContent = 'SAVED';
+  ind.style.opacity = '1';
+  clearTimeout(ind._timer);
+  ind._timer = setTimeout(() => { ind.style.opacity = '0'; }, 1500);
+}
 
 // 編成データ（各スロットの職業インデックス）
 let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 聖騎士
@@ -2567,6 +2743,7 @@ function openFormation() {
 function closeFormation() {
   document.getElementById('formation-screen').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
+  autoSave();
   setTimeout(fitToScreen, 0);
 }
 
@@ -2641,6 +2818,7 @@ function closeEnhance() {
   document.getElementById('enhance-screen').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuCrystal();
+  autoSave();
   setTimeout(fitToScreen, 0);
 }
 
@@ -2742,6 +2920,7 @@ function closeWeapon() {
   document.getElementById('weapon-screen').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuCrystal();
+  autoSave();
   setTimeout(fitToScreen, 0);
 }
 
@@ -2983,6 +3162,7 @@ function closeJobChange() {
   document.getElementById('jobchange-screen').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuCrystal();
+  autoSave();
   setTimeout(fitToScreen, 0);
 }
 
@@ -3136,6 +3316,8 @@ function returnToMenu() {
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuCrystal();
+  updateSaveInfo();
+  autoSave();
   setTimeout(fitToScreen, 0);
 }
 
@@ -3170,8 +3352,48 @@ function fitToScreen() {
 }
 
 window.addEventListener('resize', fitToScreen);
+
+// ページ起動時にロード
+if (loadGame()) {
+  console.log('Save data loaded successfully');
+}
+updateMenuCrystal();
+updateSaveInfo();
 fitToScreen();
+
+function manualSave() {
+  if (saveGame()) {
+    showSaveIndicator();
+    updateSaveInfo();
+  } else {
+    alert('セーブに失敗しました');
+  }
+}
+
+function confirmDeleteSave() {
+  if (confirm('本当にセーブデータを削除しますか？\n全ての進行状況が失われます。')) {
+    deleteSave();
+    alert('データを削除しました。ページを再読み込みします。');
+    location.reload();
+  }
+}
+
+function updateSaveInfo() {
+  const el = document.getElementById('save-info');
+  const info = getSaveInfo();
+  if (!info) {
+    el.textContent = 'セーブデータなし';
+    return;
+  }
+  let text = '💎' + info.crystals + ' | 最高Lv.' + info.maxLevel;
+  if (info.savedAt) {
+    const d = info.savedAt;
+    text += ' | ' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  el.textContent = text;
+}
 </script>
-<div id="version-label">v0.11.0</div>
+<div id="version-label">v0.12.0</div>
 </body>
 </html>
