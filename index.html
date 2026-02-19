@@ -635,12 +635,16 @@ canvas {
 
 #weapon-slots {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 14px;
+  justify-content: center;
+  max-width: 900px;
+  padding: 0 16px;
 }
 
 .weapon-slot {
-  width: 140px;
+  width: 100px;
   padding: 10px;
   background: rgba(0,0,0,0.4);
   border: 2px solid #665533;
@@ -740,6 +744,7 @@ canvas {
 
 .craft-btn .craft-icon { font-size: 24px; }
 .craft-btn .craft-name { font-size: 11px; font-weight: bold; }
+.craft-btn .craft-desc { font-size: 9px; color: #a0c090; }
 .craft-btn .craft-cost { font-size: 10px; color: #ffcc44; }
 
 #weapon-refine-panel {
@@ -1746,7 +1751,23 @@ function loadGame() {
 
     crystals = data.crystals ?? 50;
     formation = data.formation ?? [0, 1, 2, 3];
-    weapons = data.weapons ?? [null, null, null, null];
+    // 武器データの互換性処理: 旧配列形式→新オブジェクト形式に変換
+    if (Array.isArray(data.weapons)) {
+      weapons = {};
+      for (let wi = 0; wi < data.weapons.length; wi++) {
+        if (data.weapons[wi]) {
+          const oldW = data.weapons[wi];
+          // 旧武器typeが新WEAPON_DEFSの範囲内かチェック
+          if (oldW.type < WEAPON_DEFS.length) {
+            const oldFormation = data.formation || [0, 1, 2, 3];
+            const jobIdx = oldFormation[wi] ?? wi;
+            weapons[jobIdx] = oldW;
+          }
+        }
+      }
+    } else {
+      weapons = data.weapons ?? {};
+    }
     enhanceLevels = data.enhanceLevels ?? new Array(ALLY_DEFS.length).fill(0);
     missionClears = data.missionClears ?? new Array(MISSION_DEFS.length).fill(false);
     allyLevels = data.allyLevels ?? new Array(ALLY_DEFS.length).fill(1);
@@ -1826,13 +1847,29 @@ let formation = [0, 1, 2, 3]; // デフォルト: 剣士, 弓兵, 魔法使い, 
 const SLOT_LABELS = ['前列・上', '後列・上', '前列・下', '後列・下'];
 
 // 武器定義
+// jobs: 装備可能な職業インデックスの配列 (0:剣士,1:弓兵,2:魔法使い,3:聖騎士,4:忍者,5:槍兵,6:狙撃手,7:踊り子)
 const WEAPON_DEFS = [
-  { name: '鉄の剣', icon: '🗡️', atkMult: 1.3, rangePlus: 0, speedMult: 1.0, cost: 20, desc: '攻撃力重視' },
-  { name: '鉄の弓', icon: '🏹', atkMult: 1.1, rangePlus: 30, speedMult: 1.0, cost: 20, desc: '射程重視' },
-  { name: '魔法の杖', icon: '🪄', atkMult: 1.15, rangePlus: 15, speedMult: 0.9, cost: 30, desc: '攻撃速度+射程' },
-  { name: '鉄の槍', icon: '🔱', atkMult: 1.2, rangePlus: 20, speedMult: 1.0, cost: 25, desc: 'バランス型' },
-  { name: '短剣', icon: '🔪', atkMult: 1.1, rangePlus: 0, speedMult: 0.8, cost: 25, desc: '超高速攻撃' },
-  { name: '聖なる盾', icon: '🛡️', atkMult: 1.0, rangePlus: 10, speedMult: 0.95, cost: 15, desc: '堅実な防御型' },
+  // 剣系 (剣士, 聖騎士)
+  { name: '鉄の剣', icon: '🗡️', atkMult: 1.25, rangePlus: 0, speedMult: 1.0, cost: 15, desc: '基本の剣', jobs: [0, 3] },
+  { name: '炎の剣', icon: '🔥', atkMult: 1.5, rangePlus: 5, speedMult: 1.0, cost: 35, desc: '炎を纏う魔剣', jobs: [0] },
+  // 弓系 (弓兵, 狙撃手)
+  { name: '鉄の弓', icon: '🏹', atkMult: 1.1, rangePlus: 25, speedMult: 1.0, cost: 15, desc: '基本の弓', jobs: [1, 6] },
+  { name: '風の弓', icon: '🌬️', atkMult: 1.2, rangePlus: 40, speedMult: 0.9, cost: 35, desc: '風を操る魔弓', jobs: [1] },
+  // 杖系 (魔法使い, 踊り子)
+  { name: '魔法の杖', icon: '🪄', atkMult: 1.15, rangePlus: 15, speedMult: 0.9, cost: 20, desc: '魔力を増幅する杖', jobs: [2, 7] },
+  { name: '賢者の杖', icon: '✨', atkMult: 1.35, rangePlus: 20, speedMult: 0.85, cost: 40, desc: '範囲と威力を強化', jobs: [2] },
+  // 槍系 (槍兵, 聖騎士)
+  { name: '鉄の槍', icon: '🔱', atkMult: 1.2, rangePlus: 15, speedMult: 1.0, cost: 20, desc: 'バランス型の槍', jobs: [5, 3] },
+  { name: '雷の槍', icon: '⚡', atkMult: 1.4, rangePlus: 25, speedMult: 0.95, cost: 40, desc: '雷を落とす神槍', jobs: [5] },
+  // 短剣系 (忍者, 踊り子)
+  { name: '短剣', icon: '🔪', atkMult: 1.1, rangePlus: 0, speedMult: 0.8, cost: 20, desc: '素早い連撃用', jobs: [4, 7] },
+  { name: '毒の匕首', icon: '💀', atkMult: 1.3, rangePlus: 5, speedMult: 0.75, cost: 35, desc: '毒を塗った暗器', jobs: [4] },
+  // 盾系 (聖騎士)
+  { name: '聖なる盾', icon: '🛡️', atkMult: 1.0, rangePlus: 10, speedMult: 0.95, cost: 15, desc: '堅実な防御型', jobs: [3] },
+  // 狙撃銃系 (狙撃手)
+  { name: '精密照準器', icon: '🔭', atkMult: 1.3, rangePlus: 50, speedMult: 1.05, cost: 40, desc: '超長射程を実現', jobs: [6] },
+  // 扇系 (踊り子)
+  { name: '神楽鈴', icon: '🔔', atkMult: 1.1, rangePlus: 20, speedMult: 0.85, cost: 30, desc: 'スロー範囲を拡大', jobs: [7] },
 ];
 const REFINE_MAX = 10;
 
@@ -1862,7 +1899,7 @@ function getRefineBonus(lv) {
 }
 
 // 永続データ
-let weapons = [null, null, null, null]; // 各スロットの装備武器 {type, refine}
+let weapons = {}; // 各職業の装備武器 { [jobIdx]: {type, refine} }
 let crystals = 50; // 結晶（永続通貨）初期50個
 let enhanceLevels = new Array(ALLY_DEFS.length).fill(0); // 各職業の強化Lv (最大10)
 const ENHANCE_MAX = 10;
@@ -1951,8 +1988,8 @@ function init() {
     const pos = ALLY_POSITIONS[i];
     const enh = getEnhanceBonus(enhanceLevels[defIdx]);
     const lvB = getLevelBonus(allyLevels[defIdx]);
-    // 武器ボーナス
-    const w = weapons[i];
+    // 武器ボーナス (職業ごと)
+    const w = weapons[defIdx] || null;
     let wAtkMult = 1, wRangePlus = 0, wSpeedMult = 1;
     if (w) {
       const wDef = WEAPON_DEFS[w.type];
@@ -2906,12 +2943,23 @@ function doEnhance() {
 }
 
 // ===== 武器工房画面 =====
-let weaponSelectedSlot = -1;
+let weaponSelectedJob = -1; // 選択中の職業インデックス
+
+function getWeaponsForJob(jobIdx) {
+  // この職業が装備できる武器一覧を返す
+  const result = [];
+  for (let i = 0; i < WEAPON_DEFS.length; i++) {
+    if (WEAPON_DEFS[i].jobs.includes(jobIdx)) {
+      result.push(i);
+    }
+  }
+  return result;
+}
 
 function openWeapon() {
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('weapon-screen').style.display = 'flex';
-  weaponSelectedSlot = -1;
+  weaponSelectedJob = -1;
   renderWeapon();
   setTimeout(fitToScreen, 0);
 }
@@ -2928,12 +2976,19 @@ function renderWeapon() {
   document.getElementById('weapon-crystal-count').textContent = crystals;
   const container = document.getElementById('weapon-slots');
   container.innerHTML = '';
-  for (let i = 0; i < 4; i++) {
-    const jobDef = ALLY_DEFS[formation[i]];
-    const w = weapons[i];
+
+  // 全職業を表示（重複除外）
+  const shownJobs = [];
+  for (let i = 0; i < ALLY_DEFS.length; i++) {
+    shownJobs.push(i);
+  }
+
+  for (const jobIdx of shownJobs) {
+    const jobDef = ALLY_DEFS[jobIdx];
+    const w = weapons[jobIdx] || null;
     const slot = document.createElement('div');
-    slot.className = 'weapon-slot' + (weaponSelectedSlot === i ? ' selected' : '');
-    slot.onclick = () => { weaponSelectedSlot = (weaponSelectedSlot === i) ? -1 : i; renderWeapon(); };
+    slot.className = 'weapon-slot' + (weaponSelectedJob === jobIdx ? ' selected' : '');
+    slot.onclick = () => { weaponSelectedJob = (weaponSelectedJob === jobIdx) ? -1 : jobIdx; renderWeapon(); };
     if (w) {
       const wDef = WEAPON_DEFS[w.type];
       slot.innerHTML =
@@ -2953,24 +3008,32 @@ function renderWeapon() {
 
 function renderWeaponAction() {
   const panel = document.getElementById('weapon-action');
-  if (weaponSelectedSlot < 0) { panel.style.display = 'none'; return; }
+  if (weaponSelectedJob < 0) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
-  const i = weaponSelectedSlot;
-  const w = weapons[i];
+  const jobIdx = weaponSelectedJob;
+  const jobDef = ALLY_DEFS[jobIdx];
+  const w = weapons[jobIdx] || null;
+  const compatible = getWeaponsForJob(jobIdx);
 
   if (!w) {
-    // 武器作成モード
-    let html = '<h3>⚒️ 武器作成</h3><div id="weapon-craft-list">';
-    for (let j = 0; j < WEAPON_DEFS.length; j++) {
-      const d = WEAPON_DEFS[j];
-      html += '<button class="craft-btn" onclick="craftWeapon(' + j + ')"' +
-        (crystals < d.cost ? ' disabled' : '') + '>' +
-        '<div class="craft-icon">' + d.icon + '</div>' +
-        '<div class="craft-name">' + d.name + '</div>' +
-        '<div class="craft-cost">💎' + d.cost + '</div>' +
-        '</button>';
+    // 武器作成モード: 装備可能な武器だけ表示
+    let html = '<h3>⚒️ ' + jobDef.icon + ' ' + jobDef.name + ' の武器作成</h3>';
+    if (compatible.length === 0) {
+      html += '<div style="color:#888;">装備可能な武器がありません</div>';
+    } else {
+      html += '<div id="weapon-craft-list">';
+      for (const wIdx of compatible) {
+        const d = WEAPON_DEFS[wIdx];
+        html += '<button class="craft-btn" onclick="craftWeapon(' + wIdx + ')"' +
+          (crystals < d.cost ? ' disabled' : '') + '>' +
+          '<div class="craft-icon">' + d.icon + '</div>' +
+          '<div class="craft-name">' + d.name + '</div>' +
+          '<div class="craft-desc">' + d.desc + '</div>' +
+          '<div class="craft-cost">💎' + d.cost + '</div>' +
+          '</button>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
     panel.innerHTML = html;
   } else {
     // 精錬モード
@@ -2990,7 +3053,9 @@ function renderWeaponAction() {
     const spdNxt = Math.round(wDef.speedMult * nxtB.speedMult * 100);
 
     let html = '<div id="weapon-refine-panel">' +
-      '<h3>' + wDef.icon + ' ' + wDef.name + ' +' + lv + (maxed ? ' MAX' : '') + '</h3>' +
+      '<h3>' + wDef.icon + ' ' + wDef.name + ' +' + lv + (maxed ? ' MAX' : '') +
+      ' <span style="font-size:12px;color:#a0c090;">(' + jobDef.icon + jobDef.name + ')</span></h3>' +
+      '<div style="font-size:11px;color:#a0c090;margin-bottom:6px;">' + wDef.desc + '</div>' +
       '<div class="refine-stats">' +
         '<div><div class="refine-stat-label">攻撃倍率</div>' + atkCur + '%' +
           (maxed ? '' : ' <span class="refine-arrow">→ ' + atkNxt + '%</span>') + '</div>' +
@@ -3011,6 +3076,24 @@ function renderWeaponAction() {
         '">' + rate + '%</span></div>';
     }
     html += '<div id="refine-result"></div>';
+    // 別の武器に変更ボタン
+    if (compatible.length > 1) {
+      html += '<div style="margin-top:10px;border-top:1px solid #553;padding-top:8px;">' +
+        '<div style="font-size:11px;color:#a0c090;margin-bottom:6px;">武器を変更:</div>' +
+        '<div id="weapon-craft-list">';
+      for (const wIdx of compatible) {
+        if (wIdx === w.type) continue;
+        const d = WEAPON_DEFS[wIdx];
+        html += '<button class="craft-btn" onclick="swapWeapon(' + wIdx + ')"' +
+          (crystals < d.cost ? ' disabled' : '') + '>' +
+          '<div class="craft-icon">' + d.icon + '</div>' +
+          '<div class="craft-name">' + d.name + '</div>' +
+          '<div class="craft-desc">' + d.desc + '</div>' +
+          '<div class="craft-cost">💎' + d.cost + '</div>' +
+          '</button>';
+      }
+      html += '</div></div>';
+    }
     html += '<button class="discard-btn" onclick="discardWeapon()">武器を破棄</button>';
     html += '</div>';
     panel.innerHTML = html;
@@ -3018,17 +3101,28 @@ function renderWeaponAction() {
 }
 
 function craftWeapon(typeIdx) {
-  if (weaponSelectedSlot < 0) return;
+  if (weaponSelectedJob < 0) return;
   const d = WEAPON_DEFS[typeIdx];
   if (crystals < d.cost) return;
+  if (!d.jobs.includes(weaponSelectedJob)) return;
   crystals -= d.cost;
-  weapons[weaponSelectedSlot] = { type: typeIdx, refine: 0 };
+  weapons[weaponSelectedJob] = { type: typeIdx, refine: 0 };
+  renderWeapon();
+}
+
+function swapWeapon(typeIdx) {
+  if (weaponSelectedJob < 0) return;
+  const d = WEAPON_DEFS[typeIdx];
+  if (crystals < d.cost) return;
+  if (!d.jobs.includes(weaponSelectedJob)) return;
+  crystals -= d.cost;
+  weapons[weaponSelectedJob] = { type: typeIdx, refine: 0 };
   renderWeapon();
 }
 
 function refineWeapon() {
-  if (weaponSelectedSlot < 0) return;
-  const w = weapons[weaponSelectedSlot];
+  if (weaponSelectedJob < 0) return;
+  const w = weapons[weaponSelectedJob];
   if (!w || w.refine >= REFINE_MAX) return;
   const cost = getRefineCost(w.refine);
   if (crystals < cost) return;
@@ -3048,8 +3142,8 @@ function refineWeapon() {
 }
 
 function discardWeapon() {
-  if (weaponSelectedSlot < 0) return;
-  weapons[weaponSelectedSlot] = null;
+  if (weaponSelectedJob < 0) return;
+  delete weapons[weaponSelectedJob];
   renderWeapon();
 }
 
@@ -3394,6 +3488,6 @@ function updateSaveInfo() {
   el.textContent = text;
 }
 </script>
-<div id="version-label">v0.12.0</div>
+<div id="version-label">v0.13.0</div>
 </body>
 </html>
