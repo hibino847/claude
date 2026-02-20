@@ -1516,6 +1516,26 @@ canvas {
   color: #a0c090;
   margin-top: 6px;
 }
+
+#menu-audio-controls {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #a0c090;
+  align-items: center;
+}
+
+#menu-audio-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+#menu-audio-controls input[type="range"] {
+  accent-color: #4a8a2a;
+}
 </style>
 </head>
 <body>
@@ -1547,6 +1567,11 @@ canvas {
     <button class="save-delete-btn" onclick="confirmDeleteSave()">🗑️ データ削除</button>
   </div>
   <div id="save-info"></div>
+  <div id="menu-audio-controls">
+    <label><input type="checkbox" id="mute-toggle" onchange="toggleMute(this.checked)"> ミュート</label>
+    <label>BGM <input type="range" id="bgm-slider" min="0" max="100" value="35" oninput="onBgmSlider(this.value)" style="width:70px;vertical-align:middle;"></label>
+    <label>SE <input type="range" id="se-slider" min="0" max="100" value="50" oninput="onSeSlider(this.value)" style="width:70px;vertical-align:middle;"></label>
+  </div>
 </div>
 
 <div id="formation-screen">
@@ -1649,6 +1674,268 @@ canvas {
 </div><!-- /app-wrapper -->
 
 <script>
+// ===== オーディオエンジン =====
+let audioCtx = null;
+let masterGain = null;
+let bgmGain = null;
+let seGain = null;
+let bgmVolume = 0.35;
+let seVolume = 0.5;
+let audioMuted = false;
+let currentBgm = null; // {stop()}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.connect(audioCtx.destination);
+  bgmGain = audioCtx.createGain();
+  bgmGain.gain.value = bgmVolume;
+  bgmGain.connect(masterGain);
+  seGain = audioCtx.createGain();
+  seGain.gain.value = seVolume;
+  seGain.connect(masterGain);
+}
+
+function ensureAudio() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function setMuted(m) {
+  audioMuted = m;
+  if (masterGain) masterGain.gain.value = m ? 0 : 1;
+}
+
+function setBgmVolume(v) {
+  bgmVolume = v;
+  if (bgmGain) bgmGain.gain.value = v;
+}
+
+function setSeVolume(v) {
+  seVolume = v;
+  if (seGain) seGain.gain.value = v;
+}
+
+// --- SE (効果音) ---
+function playSE(type) {
+  ensureAudio();
+  const t = audioCtx.currentTime;
+  switch (type) {
+    case 'hit': playTone(800, 0.06, 'square', 0.15, seGain); break;
+    case 'kill': {
+      playTone(600, 0.08, 'square', 0.18, seGain);
+      playTone(900, 0.08, 'square', 0.15, seGain, 0.06);
+      playTone(1200, 0.1, 'square', 0.12, seGain, 0.12);
+      break;
+    }
+    case 'boss_kill': {
+      [400,600,800,1000,1200,1400].forEach((f,i) =>
+        playTone(f, 0.12, 'square', 0.2, seGain, i*0.06));
+      break;
+    }
+    case 'wave_start': {
+      playTone(440, 0.15, 'square', 0.12, seGain);
+      playTone(550, 0.15, 'square', 0.12, seGain, 0.12);
+      playTone(660, 0.2, 'square', 0.15, seGain, 0.24);
+      break;
+    }
+    case 'victory': {
+      const notes = [523,659,784,1047,784,1047];
+      notes.forEach((f,i) => playTone(f, 0.18, 'square', 0.2, seGain, i*0.12));
+      break;
+    }
+    case 'defeat': {
+      playTone(400, 0.3, 'sawtooth', 0.15, seGain);
+      playTone(300, 0.3, 'sawtooth', 0.15, seGain, 0.2);
+      playTone(200, 0.5, 'sawtooth', 0.12, seGain, 0.4);
+      break;
+    }
+    case 'click': playTone(1000, 0.04, 'square', 0.08, seGain); break;
+    case 'craft': {
+      playTone(500, 0.1, 'triangle', 0.15, seGain);
+      playTone(800, 0.1, 'triangle', 0.15, seGain, 0.08);
+      playTone(1100, 0.15, 'triangle', 0.12, seGain, 0.16);
+      break;
+    }
+    case 'refine_ok': {
+      playTone(600, 0.1, 'square', 0.15, seGain);
+      playTone(900, 0.1, 'square', 0.15, seGain, 0.08);
+      playTone(1200, 0.2, 'sine', 0.2, seGain, 0.16);
+      break;
+    }
+    case 'refine_fail': {
+      playTone(400, 0.15, 'sawtooth', 0.12, seGain);
+      playTone(250, 0.25, 'sawtooth', 0.1, seGain, 0.1);
+      break;
+    }
+    case 'levelup': {
+      [523,659,784,1047].forEach((f,i) =>
+        playTone(f, 0.15, 'sine', 0.18, seGain, i*0.08));
+      break;
+    }
+    case 'exam_pass': {
+      [440,554,659,880,1047].forEach((f,i) =>
+        playTone(f, 0.15, 'square', 0.2, seGain, i*0.1));
+      break;
+    }
+    case 'exam_fail': {
+      playTone(350, 0.2, 'sawtooth', 0.15, seGain);
+      playTone(200, 0.4, 'sawtooth', 0.1, seGain, 0.15);
+      break;
+    }
+    case 'core_hit': {
+      playNoise(0.08, 0.2, seGain);
+      playTone(150, 0.15, 'sawtooth', 0.15, seGain);
+      break;
+    }
+  }
+}
+
+function playTone(freq, dur, type, vol, dest, delay) {
+  const t = audioCtx.currentTime + (delay || 0);
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(g);
+  g.connect(dest || seGain);
+  osc.start(t);
+  osc.stop(t + dur + 0.01);
+}
+
+function playNoise(dur, vol, dest) {
+  const bufSize = audioCtx.sampleRate * dur;
+  const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  src.connect(g);
+  g.connect(dest || seGain);
+  src.start();
+}
+
+// --- BGM (プロシージャル生成) ---
+function stopBgm() {
+  if (currentBgm) { currentBgm.stop(); currentBgm = null; }
+}
+
+function playBgm(name) {
+  ensureAudio();
+  stopBgm();
+  switch (name) {
+    case 'menu': currentBgm = startMenuBgm(); break;
+    case 'battle': currentBgm = startBattleBgm(); break;
+    case 'boss': currentBgm = startBossBgm(); break;
+  }
+}
+
+function startMenuBgm() {
+  // ゆったりしたメロディ
+  const melody = [
+    262,330,392,523, 392,330,262,330,
+    349,440,523,440, 349,330,262,294,
+    330,392,523,659, 523,440,392,330,
+    262,294,330,262, 294,262,247,262,
+  ];
+  const bass = [
+    131,131,196,196, 165,165,131,131,
+    175,175,262,262, 175,165,131,147,
+    165,196,262,330, 262,220,196,165,
+    131,147,165,131, 147,131,124,131,
+  ];
+  return startLoopBgm(melody, bass, 0.22, 'sine', 180);
+}
+
+function startBattleBgm() {
+  // アップテンポなバトル曲
+  const melody = [
+    330,330,392,440, 523,523,440,392,
+    349,349,440,523, 587,523,440,349,
+    330,392,440,523, 587,659,587,523,
+    440,392,330,392, 440,392,330,294,
+  ];
+  const bass = [
+    165,165,196,220, 262,262,220,196,
+    175,175,220,262, 294,262,220,175,
+    165,196,220,262, 294,330,294,262,
+    220,196,165,196, 220,196,165,147,
+  ];
+  return startLoopBgm(melody, bass, 0.18, 'square', 280);
+}
+
+function startBossBgm() {
+  // 重厚なボス戦BGM
+  const melody = [
+    330,311,294,330, 392,370,349,330,
+    294,311,330,392, 440,392,370,349,
+    494,466,440,494, 523,494,440,392,
+    370,349,330,294, 311,330,294,262,
+  ];
+  const bass = [
+    110,110,147,147, 131,131,110,110,
+    147,147,165,165, 175,165,147,131,
+    165,165,175,175, 196,175,165,147,
+    131,131,110,110, 117,110,104,98,
+  ];
+  return startLoopBgm(melody, bass, 0.16, 'square', 320);
+}
+
+function startLoopBgm(melody, bass, vol, type, bpm) {
+  let running = true;
+  const noteDur = 60 / bpm;
+  let nextTime = audioCtx.currentTime + 0.05;
+
+  function scheduleLoop() {
+    if (!running) return;
+    for (let i = 0; i < melody.length; i++) {
+      const t = nextTime + i * noteDur;
+      // メロディ
+      const osc1 = audioCtx.createOscillator();
+      const g1 = audioCtx.createGain();
+      osc1.type = type;
+      osc1.frequency.value = melody[i];
+      g1.gain.setValueAtTime(vol, t);
+      g1.gain.setValueAtTime(vol * 0.8, t + noteDur * 0.7);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + noteDur * 0.95);
+      osc1.connect(g1);
+      g1.connect(bgmGain);
+      osc1.start(t);
+      osc1.stop(t + noteDur);
+
+      // ベース
+      const osc2 = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.value = bass[i];
+      g2.gain.setValueAtTime(vol * 0.6, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + noteDur * 0.9);
+      osc2.connect(g2);
+      g2.connect(bgmGain);
+      osc2.start(t);
+      osc2.stop(t + noteDur);
+    }
+    nextTime += melody.length * noteDur;
+    // 次ループのスケジューリング (少し前に予約)
+    const delay = (nextTime - audioCtx.currentTime - 0.5) * 1000;
+    if (running) setTimeout(scheduleLoop, Math.max(100, delay));
+  }
+
+  scheduleLoop();
+
+  return {
+    stop() {
+      running = false;
+    }
+  };
+}
+
 // ===== ゲーム定数 =====
 const CANVAS_W = 760;
 const CANVAS_H = 600;
@@ -1931,11 +2218,12 @@ function getLevelBonus(lv) {
 
 function addXP(jobIdx, amount) {
   if (allyLevels[jobIdx] >= LEVEL_MAX) return;
+  const prevLv = allyLevels[jobIdx];
   allyXP[jobIdx] += amount;
-  // レベルアップチェック
   while (allyLevels[jobIdx] < LEVEL_MAX && allyXP[jobIdx] >= getXPForLevel(allyLevels[jobIdx])) {
     allyLevels[jobIdx]++;
   }
+  if (allyLevels[jobIdx] > prevLv) playSE('levelup');
 }
 
 // ===== ゲーム状態 =====
@@ -2136,6 +2424,10 @@ function startNextWave() {
   spawnQueue = generateWave(wave);
   updateHUD();
   document.getElementById('auto-status').textContent = '⚔️ Wave ' + wave + ' 戦闘中...';
+  playSE('wave_start');
+  // ボスWaveでBGM切替
+  if (wave % 5 === 0) playBgm('boss');
+  else if (wave % 5 === 1 && wave > 1) playBgm('battle');
 }
 
 function generateWave(w) {
@@ -2270,6 +2562,8 @@ function update(dt) {
 
     if (wave >= missionMaxWave) {
       victory = true;
+      stopBgm();
+      playSE('victory');
       let reward = Math.floor(wave * 3 + score * 0.02);
       // 任務ボーナス報酬
       if (currentMission !== null) {
@@ -2317,6 +2611,7 @@ function update(dt) {
       e.attackCooldown -= dt;
       if (e.attackCooldown <= 0) {
         core.hp -= e.attackDamage;
+        playSE('core_hit');
         e.attackCooldown = e.attackSpeed;
         for (let i = 0; i < 3; i++) {
           particles.push(createParticle(CORE_X, CORE_Y, '#ff4444'));
@@ -2324,6 +2619,8 @@ function update(dt) {
         if (core.hp <= 0) {
           core.hp = 0;
           gameOver = true;
+          stopBgm();
+          playSE('defeat');
           let reward = Math.floor(wave * 2 + score * 0.01);
           // 任務敗北でも難易度に応じた少量報酬
           if (currentMission !== null) {
@@ -2419,6 +2716,7 @@ function update(dt) {
 
     if (dist <= move) {
       p.alive = false;
+      playSE('hit');
       if (p.splash > 0) {
         for (const e of enemies) {
           if (!e.alive) continue;
@@ -2471,6 +2769,7 @@ function dealDamage(enemy, dmg) {
     enemy.alive = false;
     score += enemy.score;
     sortieKills++;
+    playSE(enemy.type === 'boss' ? 'boss_kill' : 'kill');
     updateHUD();
     for (let i = 0; i < 12; i++) {
       particles.push(createParticle(enemy.x, enemy.y, enemy.color));
@@ -3314,6 +3613,8 @@ function restartGame() {
 
 // ===== メニュー =====
 function startSortie() {
+  ensureAudio();
+  playSE('click');
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('mission-screen').style.display = 'flex';
   missionSelected = -1;
@@ -3325,6 +3626,7 @@ function startSortie() {
 let editingSlot = -1;
 
 function openFormation() {
+  playSE('click');
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('formation-screen').style.display = 'flex';
   editingSlot = -1;
@@ -3399,6 +3701,7 @@ function pickJob(jobIdx) {
 let enhanceSelected = -1;
 
 function openEnhance() {
+  playSE('click');
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('enhance-screen').style.display = 'flex';
   enhanceSelected = -1;
@@ -3494,6 +3797,7 @@ function doEnhance() {
   if (crystals < cost) return;
   crystals -= cost;
   enhanceLevels[j]++;
+  playSE('craft');
   renderEnhance();
 }
 
@@ -3512,6 +3816,7 @@ function getWeaponsForJob(jobIdx) {
 }
 
 function openWeapon() {
+  playSE('click');
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('weapon-screen').style.display = 'flex';
   weaponSelectedJob = -1;
@@ -3662,6 +3967,7 @@ function craftWeapon(typeIdx) {
   if (!d.jobs.includes(weaponSelectedJob)) return;
   crystals -= d.cost;
   weapons[weaponSelectedJob] = { type: typeIdx, refine: 0 };
+  playSE('craft');
   renderWeapon();
 }
 
@@ -3686,10 +3992,12 @@ function refineWeapon() {
   const success = Math.random() * 100 < rate;
   if (success) {
     w.refine++;
+    playSE('refine_ok');
     renderWeapon();
     document.getElementById('refine-result').innerHTML =
       '<span style="color:#44ff44;">✨ 精錬成功！ +' + w.refine + ' に強化！</span>';
   } else {
+    playSE('refine_fail');
     renderWeapon();
     document.getElementById('refine-result').innerHTML =
       '<span style="color:#ff4444;">💥 精錬失敗... 結晶を失った</span>';
@@ -3786,11 +4094,13 @@ function renderMissionDetail() {
 
 function startMission() {
   if (missionSelected < 0) return;
+  ensureAudio();
   currentMission = missionSelected;
   document.getElementById('mission-screen').style.display = 'none';
   document.getElementById('game-header').style.display = 'flex';
   document.getElementById('game-container').style.display = 'flex';
   init();
+  playBgm('battle');
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);
   setTimeout(fitToScreen, 0);
@@ -3800,6 +4110,7 @@ function startMission() {
 let jcSelected = -1; // 選択中の上位職インデックス
 
 function openJobChange() {
+  playSE('click');
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('jobchange-screen').style.display = 'flex';
   jcSelected = -1;
@@ -3927,8 +4238,10 @@ function takeExam(advIdx) {
 
   if (roll < rate) {
     examPassed[advIdx] = true;
+    playSE('exam_pass');
     alert(adv.name + ' の試験に合格しました！ (成功率: ' + rate + '%)');
   } else {
+    playSE('exam_fail');
     alert(adv.name + ' の試験に失敗... (成功率: ' + rate + '%)  費用は消費されました。');
   }
 
@@ -3965,6 +4278,7 @@ function returnToMenu() {
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuCrystal();
+  playBgm('menu');
   updateSaveInfo();
   autoSave();
   setTimeout(fitToScreen, 0);
@@ -4010,6 +4324,13 @@ updateMenuCrystal();
 updateSaveInfo();
 fitToScreen();
 
+// 最初のユーザー操作でオーディオ開始＋メニューBGM
+document.addEventListener('click', function firstClick() {
+  ensureAudio();
+  if (!currentBgm) playBgm('menu');
+  document.removeEventListener('click', firstClick);
+}, { once: true });
+
 function manualSave() {
   if (saveGame()) {
     showSaveIndicator();
@@ -4025,6 +4346,21 @@ function confirmDeleteSave() {
     alert('データを削除しました。ページを再読み込みします。');
     location.reload();
   }
+}
+
+function toggleMute(checked) {
+  ensureAudio();
+  setMuted(checked);
+}
+
+function onBgmSlider(val) {
+  ensureAudio();
+  setBgmVolume(val / 100);
+}
+
+function onSeSlider(val) {
+  ensureAudio();
+  setSeVolume(val / 100);
 }
 
 function updateSaveInfo() {
@@ -4043,6 +4379,6 @@ function updateSaveInfo() {
   el.textContent = text;
 }
 </script>
-<div id="version-label">v0.15.0</div>
+<div id="version-label">v0.16.0</div>
 </body>
 </html>
