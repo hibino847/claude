@@ -1600,6 +1600,8 @@ canvas {
       <button class="speed-btn active" onclick="setSpeed(1)">x1</button>
       <button class="speed-btn" onclick="setSpeed(2)">x2</button>
       <button class="speed-btn" onclick="setSpeed(3)">x3</button>
+      <button class="speed-btn" onclick="setSpeed(5)">x5</button>
+      <button class="speed-btn" onclick="setSpeed(10)">x10</button>
     </span>
   </div>
 </div>
@@ -2087,10 +2089,11 @@ function updateAllyInfo() {
   document.getElementById('info-xp').textContent = alv >= LEVEL_MAX ? 'MAX' : axp + '/' + nextXP;
 }
 
+const SPEED_OPTIONS = [1, 2, 3, 5, 10];
 function setSpeed(s) {
   gameSpeed = s;
   document.querySelectorAll('.speed-btn').forEach((btn, i) => {
-    btn.classList.toggle('active', (i + 1) === s);
+    btn.classList.toggle('active', SPEED_OPTIONS[i] === s);
   });
 }
 
@@ -2222,10 +2225,18 @@ let loopId = 0;
 function gameLoop(timestamp) {
   const rawDt = Math.min((timestamp - lastTime) / 1000, 0.05);
   lastTime = timestamp;
-  const dt = rawDt * gameSpeed;
 
   if (!gameOver && !victory) {
-    update(dt);
+    // 高速時はサブステップで物理精度を維持
+    const totalDt = rawDt * gameSpeed;
+    const maxStep = 0.1;
+    let remaining = totalDt;
+    while (remaining > 0) {
+      const step = Math.min(remaining, maxStep);
+      update(step);
+      remaining -= step;
+      if (gameOver || victory) break;
+    }
   }
   render();
   loopId = requestAnimationFrame(gameLoop);
@@ -2492,47 +2503,98 @@ function showXPResult(elementId, lvBefore, lvAfter, bonusXP) {
 }
 
 // ===== 描画 =====
+// ステージ背景テーマ定義
+const STAGE_THEMES = [
+  // 0: 草原の小道 - 明るい草原
+  { sky: ['#87CEEB', '#B0E0E6'], ground: ['#4CAF50', '#388E3C'], path: 'rgba(139,119,80,0.3)',
+    pathEdge: 'rgba(255,255,255,0.15)', sun: true, clouds: true,
+    decoAbove: '🌿', decoBelow: '🌿', decoExtra: [{e:'🌻', x:120, y:140},{e:'🌻', x:400, y:470},{e:'🦋', x:250, y:100}] },
+  // 1: 古びた街道 - 夕暮れの街道
+  { sky: ['#e8a060', '#d4784a'], ground: ['#7a8a50', '#5a6a3a'], path: 'rgba(160,130,90,0.4)',
+    pathEdge: 'rgba(200,180,140,0.2)', sun: false, clouds: true, sunColor: '#ff8844', sunX: 680, sunY: 40,
+    decoAbove: '🏠', decoBelow: '🪨', decoExtra: [{e:'🏘️', x:80, y:130},{e:'🏚️', x:350, y:460},{e:'🐦', x:500, y:50}] },
+  // 2: 暗黒の森 - 暗い森
+  { sky: ['#2a3a2a', '#1a2a1a'], ground: ['#2a4a2a', '#1a3a1a'], path: 'rgba(50,80,50,0.4)',
+    pathEdge: 'rgba(100,200,100,0.1)', sun: false, clouds: false,
+    decoAbove: '🌲', decoBelow: '🌲', ambientColor: 'rgba(0,255,100,0.03)',
+    decoExtra: [{e:'🍄', x:90, y:440},{e:'🍄', x:300, y:150},{e:'🦇', x:400, y:60},{e:'🕷️', x:600, y:100},{e:'🌲', x:150, y:490}] },
+  // 3: 竜の峡谷 - 岩山の峡谷
+  { sky: ['#8a9ab0', '#607090'], ground: ['#8a7a6a', '#6a5a4a'], path: 'rgba(100,80,60,0.5)',
+    pathEdge: 'rgba(150,130,100,0.2)', sun: false, clouds: true, cloudColor: 'rgba(200,200,220,0.5)',
+    decoAbove: '🪨', decoBelow: '⛰️',
+    decoExtra: [{e:'🏔️', x:60, y:60},{e:'🏔️', x:250, y:55},{e:'🦅', x:500, y:40},{e:'⛰️', x:450, y:480}] },
+  // 4: 魔王の城門 - 暗い城
+  { sky: ['#1a0a2a', '#2a1040'], ground: ['#3a2a4a', '#2a1a3a'], path: 'rgba(80,50,100,0.4)',
+    pathEdge: 'rgba(150,100,200,0.15)', sun: false, clouds: false,
+    decoAbove: '🕯️', decoBelow: '💀', ambientColor: 'rgba(150,50,255,0.04)',
+    decoExtra: [{e:'🏰', x:60, y:60},{e:'🏴', x:200, y:130},{e:'🦇', x:350, y:50},{e:'🦇', x:550, y:70},{e:'💀', x:400, y:480}] },
+  // 5: 煉獄の迷宮 - 溶岩地獄
+  { sky: ['#2a0500', '#4a1000'], ground: ['#4a1a0a', '#3a0a00'], path: 'rgba(200,80,20,0.3)',
+    pathEdge: 'rgba(255,100,30,0.2)', sun: false, clouds: false,
+    decoAbove: '🔥', decoBelow: '🔥', ambientColor: 'rgba(255,50,0,0.05)',
+    decoExtra: [{e:'🌋', x:80, y:55},{e:'🌋', x:450, y:480},{e:'💀', x:250, y:140},{e:'🔥', x:600, y:100},{e:'☠️', x:350, y:470}] },
+];
+
+function getStageTheme() {
+  if (currentMission !== null && currentMission < STAGE_THEMES.length) {
+    return STAGE_THEMES[currentMission];
+  }
+  return STAGE_THEMES[0]; // デフォルト: 草原
+}
+
 function render() {
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  const theme = getStageTheme();
 
   // 空（グラデーション）
   const skyGrad = ctx.createLinearGradient(0, 0, 0, LANE_TOP);
-  skyGrad.addColorStop(0, '#87CEEB');
-  skyGrad.addColorStop(1, '#B0E0E6');
+  skyGrad.addColorStop(0, theme.sky[0]);
+  skyGrad.addColorStop(1, theme.sky[1]);
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, CANVAS_W, LANE_TOP);
 
-  // 太陽
-  ctx.beginPath();
-  ctx.arc(650, 35, 25, 0, Math.PI * 2);
-  ctx.fillStyle = '#FFD700';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(650, 35, 30, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.lineWidth = 1;
+  // 太陽/月
+  if (theme.sun) {
+    const sx = theme.sunX || 650, sy = theme.sunY || 35;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 25, 0, Math.PI * 2);
+    ctx.fillStyle = theme.sunColor || '#FFD700';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sx, sy, 30, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+  }
 
   // 雲
-  drawCloud(100, 25, 40);
-  drawCloud(300, 40, 30);
-  drawCloud(500, 20, 35);
+  if (theme.clouds) {
+    const cc = theme.cloudColor || 'rgba(255,255,255,0.8)';
+    drawCloud(100, 25, 40, cc);
+    drawCloud(300, 40, 30, cc);
+    drawCloud(500, 20, 35, cc);
+  }
 
-  // 草原の背景
+  // 地面
   const grassGrad = ctx.createLinearGradient(0, LANE_TOP, 0, CANVAS_H);
-  grassGrad.addColorStop(0, '#4CAF50');
-  grassGrad.addColorStop(1, '#388E3C');
+  grassGrad.addColorStop(0, theme.ground[0]);
+  grassGrad.addColorStop(1, theme.ground[1]);
   ctx.fillStyle = grassGrad;
   ctx.fillRect(0, LANE_TOP, CANVAS_W, CANVAS_H - LANE_TOP);
+
+  // 環境光（暗い/幻想的なステージ用）
+  if (theme.ambientColor) {
+    ctx.fillStyle = theme.ambientColor;
+    ctx.fillRect(0, LANE_TOP, CANVAS_W, CANVAS_H - LANE_TOP);
+  }
 
   // 中央の道を描画
   const pathY = CORE_Y - 50;
   const pathH = 100;
-  ctx.fillStyle = 'rgba(139, 119, 80, 0.3)';
+  ctx.fillStyle = theme.path;
   ctx.fillRect(0, pathY, CANVAS_W, pathH);
-  // 道の縁線
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.strokeStyle = theme.pathEdge;
   ctx.setLineDash([10, 10]);
   ctx.beginPath();
   ctx.moveTo(0, pathY);
@@ -2541,13 +2603,24 @@ function render() {
   ctx.lineTo(CANVAS_W, pathY + pathH);
   ctx.stroke();
   ctx.setLineDash([]);
-  // 草の装飾
-  for (let gx = 20; gx < CANVAS_W; gx += 60) {
+
+  // 道の上下の装飾
+  ctx.font = '14px sans-serif';
+  for (let gx = 20; gx < CANVAS_W; gx += 70) {
     const gy1 = pathY - 5 + Math.sin(gx * 0.1) * 3;
     const gy2 = pathY + pathH + 5 + Math.sin(gx * 0.1 + 2) * 3;
-    ctx.fillStyle = '#66BB6A';
-    ctx.fillText('🌿', gx, gy1);
-    ctx.fillText('🌿', gx, gy2);
+    ctx.fillText(theme.decoAbove, gx, gy1);
+    ctx.fillText(theme.decoBelow, gx, gy2);
+  }
+
+  // ステージ固有の追加デコレーション
+  ctx.font = '24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (theme.decoExtra) {
+    for (const d of theme.decoExtra) {
+      ctx.fillText(d.e, d.x, d.y);
+    }
   }
 
   // コア描画
@@ -2743,8 +2816,8 @@ function render() {
   ctx.fillText(`コアHP: ${Math.ceil(core.hp)}/${core.maxHp}  |  敵: ${aliveEnemies}体  |  味方: ${allies.length}人`, 10, CANVAS_H - 12);
 }
 
-function drawCloud(x, y, size) {
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+function drawCloud(x, y, size, color) {
+  ctx.fillStyle = color || 'rgba(255, 255, 255, 0.8)';
   ctx.beginPath();
   ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
   ctx.arc(x + size * 0.4, y - size * 0.15, size * 0.4, 0, Math.PI * 2);
@@ -3488,6 +3561,6 @@ function updateSaveInfo() {
   el.textContent = text;
 }
 </script>
-<div id="version-label">v0.13.0</div>
+<div id="version-label">v0.14.0</div>
 </body>
 </html>
