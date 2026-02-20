@@ -2681,24 +2681,10 @@ function render() {
     // 影
     ctx.beginPath();
     ctx.ellipse(e.x, e.y + e.radius + 2, e.radius * 0.8, 4, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fill();
 
-    // 本体（円）
-    ctx.beginPath();
-    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-    ctx.fillStyle = e.color;
-    ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.lineWidth = 1;
-
-    // 絵文字
-    ctx.font = `${e.radius * 1.4}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(e.emoji, e.x, e.y);
+    drawEnemyCreature(e.x, e.y, e.radius, e.type, e.color);
 
     // スロー表示
     if (e.slowTimer > 0) {
@@ -2735,39 +2721,27 @@ function render() {
   for (const a of allies) {
     // 影
     ctx.beginPath();
-    ctx.ellipse(a.x, a.y + 22, 16, 5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.ellipse(a.x, a.y + 22, 14, 5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fill();
 
-    // 攻撃アニメーション（ちょっと前に出る）
+    // 攻撃アニメーション
     let drawX = a.x;
     if (a.attackAnim > 0) {
-      drawX -= 8 * (a.attackAnim / 0.15);
+      drawX -= 6 * (a.attackAnim / 0.15);
     }
 
-    // 本体（丸い台座）
-    ctx.beginPath();
-    ctx.arc(drawX, a.y, 20, 0, Math.PI * 2);
-    ctx.fillStyle = a.color;
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.lineWidth = 1;
-
-    // アイコン
-    ctx.font = '24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(a.icon, drawX, a.y);
+    drawAllyCharacter(drawX, a.y, a.type, a.color, a.attackAnim > 0);
 
     // 選択ハイライト
     if (selectedAlly === a) {
       ctx.beginPath();
-      ctx.arc(drawX, a.y, 24, 0, Math.PI * 2);
+      ctx.arc(drawX, a.y, 26, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
       ctx.stroke();
+      ctx.setLineDash([]);
       ctx.lineWidth = 1;
     }
   }
@@ -2814,6 +2788,514 @@ function render() {
   ctx.textBaseline = 'middle';
   const aliveEnemies = enemies.filter(e => e.alive).length;
   ctx.fillText(`コアHP: ${Math.ceil(core.hp)}/${core.maxHp}  |  敵: ${aliveEnemies}体  |  味方: ${allies.length}人`, 10, CANVAS_H - 12);
+}
+
+// ===== キャラクター描画関数 =====
+function drawAllyCharacter(x, y, jobType, color, attacking) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // 基本職マッピング（転職後もbaseJobで描画分岐）
+  let baseJob = jobType;
+  if (jobChanged[jobType]) {
+    // 転職後: ADVANCED_DEFSからbaseJobを使う
+    for (const adv of ADVANCED_DEFS) {
+      if (adv.baseJob === jobType) { baseJob = jobType; break; }
+    }
+  }
+
+  const s = 1.0; // スケール
+  switch (baseJob) {
+    case 0: drawSwordsman(s, color, attacking, jobChanged[0]); break;
+    case 1: drawArcher(s, color, attacking, jobChanged[1]); break;
+    case 2: drawMage(s, color, attacking, jobChanged[2]); break;
+    case 3: drawPaladin(s, color, attacking, jobChanged[3]); break;
+    case 4: drawNinja(s, color, attacking, jobChanged[4]); break;
+    case 5: drawLancer(s, color, attacking, jobChanged[5]); break;
+    case 6: drawSniper(s, color, attacking, jobChanged[6]); break;
+    case 7: drawDancer(s, color, attacking, jobChanged[7]); break;
+    default: drawGenericHuman(s, color); break;
+  }
+  ctx.restore();
+}
+
+// 汎用人型パーツ
+function drawHumanBody(s, skinColor, bodyColor, legColor) {
+  // 足
+  ctx.fillStyle = legColor || '#554433';
+  ctx.fillRect(-6*s, 8*s, 5*s, 12*s);
+  ctx.fillRect(1*s, 8*s, 5*s, 12*s);
+  // 靴
+  ctx.fillStyle = '#443322';
+  ctx.fillRect(-7*s, 17*s, 6*s, 4*s);
+  ctx.fillRect(1*s, 17*s, 6*s, 4*s);
+  // 体
+  ctx.fillStyle = bodyColor;
+  ctx.fillRect(-8*s, -6*s, 16*s, 16*s);
+  // 顔
+  ctx.fillStyle = skinColor || '#ffddbb';
+  ctx.beginPath();
+  ctx.arc(0, -12*s, 8*s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  // 目
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-4*s, -14*s, 2.5*s, 2.5*s);
+  ctx.fillRect(1.5*s, -14*s, 2.5*s, 2.5*s);
+}
+
+// 0: 剣士 / 剣聖
+function drawSwordsman(s, color, atk, advanced) {
+  drawHumanBody(s, '#ffddbb', color, '#884433');
+  // 鎧ライン
+  ctx.strokeStyle = advanced ? '#ffd700' : '#ffeeaa';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-8*s, -2*s); ctx.lineTo(8*s, -2*s); ctx.stroke();
+  // 剣
+  const sx = atk ? -18*s : -12*s;
+  ctx.fillStyle = '#ccc';
+  ctx.fillRect(sx, -16*s, 3*s, 20*s);
+  ctx.fillStyle = advanced ? '#ffd700' : '#aa8844';
+  ctx.fillRect(sx - 2*s, -2*s, 7*s, 3*s); // つば
+  // ヘルメット
+  ctx.fillStyle = advanced ? '#ffd700' : color;
+  ctx.beginPath(); ctx.arc(0, -16*s, 7*s, Math.PI, 0); ctx.fill();
+  if (advanced) {
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(-1*s, -24*s, 2*s, 6*s); // 羽飾り
+  }
+}
+
+// 1: 弓兵 / 弓聖
+function drawArcher(s, color, atk, advanced) {
+  drawHumanBody(s, '#ffddbb', color, '#556633');
+  // マント
+  ctx.fillStyle = advanced ? '#22cc66' : '#558844';
+  ctx.beginPath();
+  ctx.moveTo(6*s, -6*s); ctx.lineTo(12*s, 10*s); ctx.lineTo(4*s, 10*s); ctx.fill();
+  // 弓
+  ctx.strokeStyle = advanced ? '#ffd700' : '#aa7733';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(-14*s, -4*s, 14*s, -0.7, 0.7);
+  ctx.stroke();
+  // 弦
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-14*s + 14*s*Math.cos(-0.7), -4*s + 14*s*Math.sin(-0.7));
+  ctx.lineTo(atk ? -20*s : -14*s, -4*s);
+  ctx.lineTo(-14*s + 14*s*Math.cos(0.7), -4*s + 14*s*Math.sin(0.7));
+  ctx.stroke();
+  // 帽子
+  ctx.fillStyle = advanced ? '#ffd700' : '#558844';
+  ctx.beginPath(); ctx.moveTo(-6*s, -18*s); ctx.lineTo(0, -26*s); ctx.lineTo(6*s, -18*s); ctx.fill();
+}
+
+// 2: 魔法使い / 大魔導士
+function drawMage(s, color, atk, advanced) {
+  // ローブ（体が隠れる）
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-10*s, -6*s);
+  ctx.lineTo(-12*s, 20*s);
+  ctx.lineTo(12*s, 20*s);
+  ctx.lineTo(10*s, -6*s);
+  ctx.fill();
+  // 顔
+  ctx.fillStyle = '#ffddbb';
+  ctx.beginPath(); ctx.arc(0, -12*s, 8*s, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-4*s, -14*s, 2.5*s, 2.5*s);
+  ctx.fillRect(1.5*s, -14*s, 2.5*s, 2.5*s);
+  // 三角帽子
+  ctx.fillStyle = advanced ? '#ffd700' : color;
+  ctx.beginPath(); ctx.moveTo(-10*s, -16*s); ctx.lineTo(0, -32*s); ctx.lineTo(10*s, -16*s); ctx.fill();
+  ctx.fillStyle = advanced ? '#ff44ff' : '#ffcc44';
+  ctx.beginPath(); ctx.arc(0, -32*s, 3*s, 0, Math.PI * 2); ctx.fill(); // 帽子先端の星
+  // 杖
+  const sx = atk ? -18*s : -14*s;
+  ctx.fillStyle = '#886644';
+  ctx.fillRect(sx, -24*s, 3*s, 36*s);
+  ctx.fillStyle = advanced ? '#ff44ff' : '#44aaff';
+  ctx.beginPath(); ctx.arc(sx + 1.5*s, -26*s, 5*s, 0, Math.PI * 2); ctx.fill();
+  if (atk) {
+    ctx.fillStyle = advanced ? 'rgba(255,68,255,0.4)' : 'rgba(68,170,255,0.4)';
+    ctx.beginPath(); ctx.arc(sx + 1.5*s, -26*s, 10*s, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// 3: 聖騎士 / 聖王
+function drawPaladin(s, color, atk, advanced) {
+  drawHumanBody(s, '#ffddbb', color, '#887733');
+  // 重装鎧ライン
+  ctx.strokeStyle = advanced ? '#ffd700' : '#ddd';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-8*s, -6*s, 16*s, 16*s);
+  // 盾
+  ctx.fillStyle = advanced ? '#ffd700' : '#4488cc';
+  ctx.beginPath();
+  ctx.moveTo(12*s, -8*s); ctx.lineTo(22*s, -4*s); ctx.lineTo(22*s, 8*s);
+  ctx.lineTo(12*s, 12*s); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+  ctx.stroke();
+  if (advanced) {
+    ctx.fillStyle = '#fff';
+    ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('✦', 17*s, 2*s);
+  }
+  // 剣
+  const sx = atk ? -16*s : -10*s;
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(sx, -14*s, 3*s, 18*s);
+  ctx.fillStyle = '#ffd700';
+  ctx.fillRect(sx - 2*s, 0, 7*s, 3*s);
+  // ヘルメット
+  ctx.fillStyle = advanced ? '#ffd700' : '#aaa';
+  ctx.beginPath(); ctx.arc(0, -16*s, 8*s, Math.PI, 0); ctx.fill();
+  if (advanced) {
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.moveTo(-2*s, -24*s); ctx.lineTo(0, -30*s); ctx.lineTo(2*s, -24*s); ctx.fill();
+  }
+}
+
+// 4: 忍者 / 影忍
+function drawNinja(s, color, atk, advanced) {
+  // 体
+  ctx.fillStyle = advanced ? '#220044' : '#333';
+  ctx.fillRect(-7*s, -6*s, 14*s, 14*s);
+  // 足
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-5*s, 8*s, 4*s, 10*s);
+  ctx.fillRect(1*s, 8*s, 4*s, 10*s);
+  // マスクの顔
+  ctx.fillStyle = advanced ? '#220044' : '#333';
+  ctx.beginPath(); ctx.arc(0, -12*s, 8*s, 0, Math.PI * 2); ctx.fill();
+  // 目だけ光る
+  ctx.fillStyle = advanced ? '#ff44ff' : '#ff4444';
+  ctx.fillRect(-5*s, -14*s, 3*s, 2*s);
+  ctx.fillRect(2*s, -14*s, 3*s, 2*s);
+  // マフラー
+  ctx.fillStyle = advanced ? '#aa00aa' : color;
+  ctx.beginPath();
+  ctx.moveTo(6*s, -12*s); ctx.lineTo(18*s, -6*s); ctx.lineTo(16*s, 2*s); ctx.lineTo(6*s, -4*s);
+  ctx.fill();
+  // 苦無
+  const sx = atk ? -18*s : -12*s;
+  ctx.fillStyle = '#bbb';
+  ctx.beginPath();
+  ctx.moveTo(sx, -12*s); ctx.lineTo(sx - 6*s, -6*s); ctx.lineTo(sx, 0);
+  ctx.lineTo(sx + 2*s, -6*s); ctx.fill();
+}
+
+// 5: 槍兵 / 竜騎士
+function drawLancer(s, color, atk, advanced) {
+  drawHumanBody(s, '#ffddbb', color, '#775533');
+  // 鎧ライン
+  ctx.strokeStyle = advanced ? '#ff8800' : '#ddd';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-8*s, 0); ctx.lineTo(8*s, 0); ctx.stroke();
+  // 槍
+  const sx = atk ? -22*s : -14*s;
+  ctx.fillStyle = '#886644';
+  ctx.fillRect(sx + 6*s, -4*s, 3*s, 28*s);
+  ctx.fillStyle = advanced ? '#ff8800' : '#ccc';
+  ctx.beginPath();
+  ctx.moveTo(sx + 4*s, -4*s); ctx.lineTo(sx + 7.5*s, -16*s); ctx.lineTo(sx + 11*s, -4*s);
+  ctx.fill();
+  // ヘルメット
+  ctx.fillStyle = advanced ? '#ff8800' : color;
+  ctx.beginPath(); ctx.arc(0, -16*s, 7*s, Math.PI, 0); ctx.fill();
+  if (advanced) {
+    // 竜の翼
+    ctx.fillStyle = 'rgba(255,136,0,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(8*s, -4*s); ctx.lineTo(24*s, -16*s); ctx.lineTo(20*s, 4*s); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-8*s, -4*s); ctx.lineTo(-24*s, -16*s); ctx.lineTo(-20*s, 4*s); ctx.fill();
+  }
+}
+
+// 6: 狙撃手 / 魔弾の射手
+function drawSniper(s, color, atk, advanced) {
+  drawHumanBody(s, '#ffddbb', color, '#445566');
+  // コート
+  ctx.fillStyle = advanced ? '#115555' : '#556677';
+  ctx.beginPath();
+  ctx.moveTo(6*s, -2*s); ctx.lineTo(10*s, 16*s); ctx.lineTo(4*s, 16*s); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-6*s, -2*s); ctx.lineTo(-10*s, 16*s); ctx.lineTo(-4*s, 16*s); ctx.fill();
+  // 銃/クロスボウ
+  const sx = atk ? -20*s : -14*s;
+  ctx.fillStyle = '#666';
+  ctx.fillRect(sx, -6*s, 18*s, 3*s);
+  ctx.fillStyle = '#444';
+  ctx.fillRect(sx, -10*s, 3*s, 8*s);
+  if (advanced) {
+    ctx.fillStyle = '#44ffff';
+    ctx.beginPath(); ctx.arc(sx + 1.5*s, -4.5*s, 4*s, 0, Math.PI * 2); ctx.globalAlpha = 0.4; ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // フード
+  ctx.fillStyle = advanced ? '#115555' : '#556677';
+  ctx.beginPath(); ctx.arc(0, -14*s, 9*s, Math.PI * 0.8, Math.PI * 0.2); ctx.fill();
+  // スコープ光
+  if (advanced) {
+    ctx.fillStyle = '#44ffff';
+    ctx.beginPath(); ctx.arc(sx, -6*s, 2*s, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// 7: 踊り子 / 神楽巫女
+function drawDancer(s, color, atk, advanced) {
+  // スカート（広がるドレス）
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-6*s, -2*s);
+  ctx.lineTo(-14*s, 20*s);
+  ctx.lineTo(14*s, 20*s);
+  ctx.lineTo(6*s, -2*s);
+  ctx.fill();
+  // 上半身
+  ctx.fillStyle = advanced ? '#ffaacc' : color;
+  ctx.fillRect(-6*s, -8*s, 12*s, 8*s);
+  // 顔
+  ctx.fillStyle = '#ffddbb';
+  ctx.beginPath(); ctx.arc(0, -14*s, 7*s, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-3*s, -16*s, 2*s, 2*s);
+  ctx.fillRect(1*s, -16*s, 2*s, 2*s);
+  // 髪
+  ctx.fillStyle = advanced ? '#ffaacc' : '#885522';
+  ctx.beginPath(); ctx.arc(0, -16*s, 8*s, Math.PI * 0.9, Math.PI * 0.1); ctx.fill();
+  ctx.fillRect(-8*s, -16*s, 3*s, 12*s);
+  ctx.fillRect(5*s, -16*s, 3*s, 12*s);
+  // 扇/鈴
+  if (advanced) {
+    ctx.fillStyle = '#ff66aa';
+    ctx.beginPath(); ctx.arc(-14*s, -6*s, 6*s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(-14*s, -6*s, 3*s, 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.fillStyle = '#ff88aa';
+    ctx.beginPath();
+    ctx.moveTo(-12*s, -10*s); ctx.lineTo(-22*s, -16*s); ctx.lineTo(-22*s, 0); ctx.fill();
+  }
+  // リボン
+  ctx.fillStyle = advanced ? '#ffd700' : '#ff4488';
+  ctx.fillRect(-2*s, -8*s, 4*s, 2*s);
+}
+
+// 汎用人型
+function drawGenericHuman(s, color) {
+  drawHumanBody(s, '#ffddbb', color, '#555');
+}
+
+// ===== 敵モンスター描画 =====
+function drawEnemyCreature(x, y, r, type, color) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  switch (type) {
+    case 'normal': drawSlime(r, color); break;
+    case 'fast': drawWolf(r, color); break;
+    case 'tank': drawGolem(r, color); break;
+    case 'healer': drawDarkPriest(r, color); break;
+    case 'boss': drawDragon(r, color); break;
+    default: drawSlime(r, color); break;
+  }
+  ctx.restore();
+}
+
+// スライム (normal)
+function drawSlime(r, color) {
+  // ぷるんとしたスライム体
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-r, r * 0.3);
+  ctx.quadraticCurveTo(-r, -r, 0, -r);
+  ctx.quadraticCurveTo(r, -r, r, r * 0.3);
+  ctx.quadraticCurveTo(r * 0.5, r * 0.6, 0, r * 0.5);
+  ctx.quadraticCurveTo(-r * 0.5, r * 0.6, -r, r * 0.3);
+  ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+  // ハイライト
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.3, r * 0.25, 0, Math.PI * 2); ctx.fill();
+  // 目
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.15, r * 0.22, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r * 0.3, -r * 0.15, r * 0.22, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(-r * 0.25, -r * 0.1, r * 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r * 0.35, -r * 0.1, r * 0.1, 0, Math.PI * 2); ctx.fill();
+  // 口
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(0, r * 0.1, r * 0.2, 0, Math.PI); ctx.stroke();
+}
+
+// 狼 (fast)
+function drawWolf(r, color) {
+  const s = r / 10;
+  // 体
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(0, 2*s, r, r * 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke();
+  // 頭
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(-r * 0.7, -r * 0.2, r * 0.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.stroke();
+  // 耳
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.9, -r * 0.5); ctx.lineTo(-r * 1.1, -r * 1.0); ctx.lineTo(-r * 0.7, -r * 0.6);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.5, -r * 0.5); ctx.lineTo(-r * 0.6, -r * 1.0); ctx.lineTo(-r * 0.3, -r * 0.5);
+  ctx.fill();
+  // 目
+  ctx.fillStyle = '#ff4444';
+  ctx.beginPath(); ctx.arc(-r * 0.8, -r * 0.25, 2*s, 0, Math.PI * 2); ctx.fill();
+  // 鼻
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(-r * 1.1, -r * 0.15, 1.5*s, 0, Math.PI * 2); ctx.fill();
+  // 足
+  ctx.fillStyle = color;
+  ctx.fillRect(-r * 0.6, r * 0.3, 3*s, 6*s);
+  ctx.fillRect(-r * 0.2, r * 0.3, 3*s, 6*s);
+  ctx.fillRect(r * 0.2, r * 0.3, 3*s, 6*s);
+  ctx.fillRect(r * 0.6, r * 0.3, 3*s, 6*s);
+  // しっぽ
+  ctx.strokeStyle = color; ctx.lineWidth = 2*s;
+  ctx.beginPath();
+  ctx.moveTo(r * 0.8, 0); ctx.quadraticCurveTo(r * 1.3, -r * 0.5, r * 1.1, -r * 0.7);
+  ctx.stroke();
+}
+
+// ゴーレム (tank)
+function drawGolem(r, color) {
+  const s = r / 16;
+  // 体（四角い岩）
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.7, -r * 0.5);
+  ctx.lineTo(-r * 0.8, r * 0.6);
+  ctx.lineTo(r * 0.8, r * 0.6);
+  ctx.lineTo(r * 0.7, -r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5; ctx.stroke();
+  // 岩テクスチャ
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(-r*0.4, -r*0.3); ctx.lineTo(-r*0.2, r*0.3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(r*0.2, -r*0.2); ctx.lineTo(r*0.4, r*0.4); ctx.stroke();
+  // 頭
+  ctx.fillStyle = color;
+  ctx.fillRect(-r * 0.5, -r * 0.9, r, r * 0.5);
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(-r * 0.5, -r * 0.9, r, r * 0.5);
+  // 目（光る）
+  ctx.fillStyle = '#ffaa00';
+  ctx.fillRect(-r * 0.3, -r * 0.75, r * 0.2, r * 0.15);
+  ctx.fillRect(r * 0.1, -r * 0.75, r * 0.2, r * 0.15);
+  // 腕
+  ctx.fillStyle = color;
+  ctx.fillRect(-r * 1.1, -r * 0.3, r * 0.4, r * 0.7);
+  ctx.fillRect(r * 0.7, -r * 0.3, r * 0.4, r * 0.7);
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  ctx.strokeRect(-r * 1.1, -r * 0.3, r * 0.4, r * 0.7);
+  ctx.strokeRect(r * 0.7, -r * 0.3, r * 0.4, r * 0.7);
+}
+
+// ダークプリースト (healer)
+function drawDarkPriest(r, color) {
+  // ローブ
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.6, -r * 0.3);
+  ctx.lineTo(-r * 0.8, r * 0.8);
+  ctx.lineTo(r * 0.8, r * 0.8);
+  ctx.lineTo(r * 0.6, -r * 0.3);
+  ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+  // フード
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(0, -r * 0.4, r * 0.6, Math.PI, 0); ctx.fill();
+  ctx.fillRect(-r * 0.6, -r * 0.4, r * 1.2, r * 0.2);
+  // 目（紫に光る）
+  ctx.fillStyle = '#ee44ee';
+  ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.3, r * 0.1, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r * 0.2, -r * 0.3, r * 0.1, 0, Math.PI * 2); ctx.fill();
+  // 杖
+  ctx.fillStyle = '#554433';
+  ctx.fillRect(-r * 0.9, -r * 0.8, r * 0.15, r * 1.5);
+  ctx.fillStyle = '#ee44ee';
+  ctx.beginPath(); ctx.arc(-r * 0.83, -r * 0.9, r * 0.18, 0, Math.PI * 2); ctx.fill();
+  // 回復オーラ
+  ctx.strokeStyle = 'rgba(238,68,238,0.3)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, r * 1.1, 0, Math.PI * 2); ctx.stroke();
+}
+
+// ドラゴン (boss)
+function drawDragon(r, color) {
+  const s = r / 22;
+  // 体
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(0, 2*s, r * 0.8, r * 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+  // 腹
+  ctx.fillStyle = '#ffcc66';
+  ctx.beginPath();
+  ctx.ellipse(0, 4*s, r * 0.5, r * 0.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // 頭
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(-r * 0.6, -r * 0.4, r * 0.45, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+  // 角
+  ctx.fillStyle = '#dda000';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.7, -r * 0.7); ctx.lineTo(-r * 0.9, -r * 1.2); ctx.lineTo(-r * 0.5, -r * 0.6); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.4, -r * 0.7); ctx.lineTo(-r * 0.3, -r * 1.1); ctx.lineTo(-r * 0.2, -r * 0.6); ctx.fill();
+  // 目
+  ctx.fillStyle = '#ff2200';
+  ctx.beginPath(); ctx.arc(-r * 0.7, -r * 0.35, r * 0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffff00';
+  ctx.beginPath(); ctx.arc(-r * 0.7, -r * 0.35, r * 0.06, 0, Math.PI * 2); ctx.fill();
+  // 口
+  ctx.fillStyle = '#880000';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.9, -r * 0.2); ctx.lineTo(-r * 1.1, -r * 0.15); ctx.lineTo(-r * 0.9, -r * 0.05);
+  ctx.fill();
+  // 翼
+  ctx.fillStyle = 'rgba(255,100,0,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.3); ctx.lineTo(r * 0.5, -r * 1.2); ctx.lineTo(r * 0.9, -r * 0.8);
+  ctx.lineTo(r * 0.6, -r * 0.2); ctx.fill();
+  ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+  // しっぽ
+  ctx.strokeStyle = color; ctx.lineWidth = 4*s;
+  ctx.beginPath();
+  ctx.moveTo(r * 0.7, 2*s);
+  ctx.quadraticCurveTo(r * 1.2, -r * 0.2, r * 1.0, -r * 0.5);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(r * 0.9, -r * 0.55); ctx.lineTo(r * 1.2, -r * 0.7); ctx.lineTo(r * 1.05, -r * 0.35);
+  ctx.fill();
+  // 足
+  ctx.fillStyle = color;
+  ctx.fillRect(-r * 0.4, r * 0.35, 5*s, 8*s);
+  ctx.fillRect(r * 0.1, r * 0.35, 5*s, 8*s);
 }
 
 function drawCloud(x, y, size, color) {
@@ -3561,6 +4043,6 @@ function updateSaveInfo() {
   el.textContent = text;
 }
 </script>
-<div id="version-label">v0.14.0</div>
+<div id="version-label">v0.15.0</div>
 </body>
 </html>
