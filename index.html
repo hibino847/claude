@@ -153,6 +153,65 @@ canvas {
   margin: 2px 0;
 }
 
+.skill-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 4px;
+  background: linear-gradient(180deg, #5a3a8a, #3a1a6a);
+  border: 1px solid #8a5acc;
+  border-radius: 5px;
+  color: #e0d0ff;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-btn:hover:not(.on-cooldown) {
+  background: linear-gradient(180deg, #7a4aaa, #5a2a8a);
+  box-shadow: 0 0 8px rgba(150, 100, 255, 0.5);
+  transform: scale(1.03);
+}
+
+.skill-btn.on-cooldown {
+  background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
+  border-color: #555;
+  color: #888;
+  cursor: default;
+}
+
+.skill-btn .skill-cd-bar {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 3px;
+  background: #8a5acc;
+  transition: width 0.3s linear;
+}
+
+.skill-btn-desc {
+  font-size: 9px;
+  color: #b0a0cc;
+  font-weight: normal;
+  margin-top: 2px;
+}
+
+.skill-btn.on-cooldown .skill-btn-desc { color: #666; }
+
+.buff-indicator {
+  display: inline-block;
+  font-size: 9px;
+  color: #ff8;
+  background: rgba(255,255,0,0.15);
+  border: 1px solid rgba(255,255,0,0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-top: 3px;
+}
+
 .speed-btn {
   padding: 4px 8px;
   background: rgba(74, 138, 42, 0.3);
@@ -1643,6 +1702,7 @@ canvas {
       <div class="stat"><span>射程</span><span id="info-range"></span></div>
       <div class="stat"><span>速度</span><span id="info-speed"></span></div>
       <div class="stat"><span>経験値</span><span id="info-xp" style="color:#88ccff;"></span></div>
+      <div id="skill-section"></div>
     </div>
 
     <div id="auto-status" style="text-align:center; padding:8px; color:#ffcc44; font-size:13px; font-weight:bold;">
@@ -1787,6 +1847,24 @@ function playSE(type) {
     case 'core_hit': {
       playNoise(0.08, 0.2, seGain);
       playTone(150, 0.15, 'sawtooth', 0.15, seGain);
+      break;
+    }
+    case 'skill': {
+      playTone(880, 0.08, 'sine', 0.2, seGain);
+      playTone(1100, 0.1, 'sine', 0.2, seGain, 0.06);
+      playTone(1320, 0.15, 'sine', 0.18, seGain, 0.12);
+      playTone(1760, 0.2, 'triangle', 0.15, seGain, 0.18);
+      break;
+    }
+    case 'heal': {
+      [523, 659, 784, 1047].forEach((f, i) =>
+        playTone(f, 0.12, 'sine', 0.15, seGain, i * 0.06));
+      break;
+    }
+    case 'buff': {
+      playTone(440, 0.1, 'triangle', 0.15, seGain);
+      playTone(660, 0.1, 'triangle', 0.15, seGain, 0.08);
+      playTone(880, 0.15, 'triangle', 0.18, seGain, 0.16);
       break;
     }
   }
@@ -1962,42 +2040,58 @@ const ALLY_POSITIONS = [
 // 味方ユニット定義
 const ALLY_DEFS = [
   { name: '剣士', icon: '⚔️', damage: 20, range: 80, speed: 0.8, maxHp: 150, color: '#cc4444',
-    desc: '近距離の高火力アタッカー' },
+    desc: '近距離の高火力アタッカー',
+    skill: { name: '旋風斬', cd: 12, desc: '周囲の敵全体に大ダメージ', type: 'aoe_self', mult: 2.5, radius: 120 } },
   { name: '弓兵', icon: '🏹', damage: 12, range: 200, speed: 1.0, maxHp: 80, color: '#44cc44',
-    desc: '遠距離の安定した攻撃' },
+    desc: '遠距離の安定した攻撃',
+    skill: { name: '矢の雨', cd: 14, desc: '広範囲に矢の雨を降らせる', type: 'aoe_area', mult: 1.8, radius: 100 } },
   { name: '魔法使い', icon: '🔮', damage: 18, range: 180, speed: 1.5, maxHp: 70, color: '#8844ff',
-    desc: '範囲攻撃＋スロー効果', splash: 60, slow: 0.3 },
+    desc: '範囲攻撃＋スロー効果', splash: 60, slow: 0.3,
+    skill: { name: 'メテオ', cd: 16, desc: '最も敵が密集した地点に隕石', type: 'aoe_area', mult: 3.0, radius: 130 } },
   { name: '聖騎士', icon: '🛡️', damage: 15, range: 100, speed: 1.0, maxHp: 250, color: '#ffcc00',
-    desc: '高耐久の守護者' },
+    desc: '高耐久の守護者',
+    skill: { name: '聖盾', cd: 18, desc: 'コアHPを大幅回復', type: 'heal_core', healPct: 0.2 } },
   { name: '忍者', icon: '🗡️', damage: 10, range: 120, speed: 0.4, maxHp: 90, color: '#6644aa',
-    desc: '超高速の連続攻撃' },
+    desc: '超高速の連続攻撃',
+    skill: { name: '影分身', cd: 10, desc: '一定時間攻撃力と速度が倍増', type: 'buff_self', dur: 5, atkMult: 2.0, spdMult: 0.5 } },
   { name: '槍兵', icon: '🔱', damage: 16, range: 140, speed: 1.0, maxHp: 130, color: '#cc8844',
-    desc: '中距離の範囲突撃', splash: 40 },
+    desc: '中距離の範囲突撃', splash: 40,
+    skill: { name: '突撃', cd: 13, desc: '前方の敵に貫通ダメージ', type: 'line_atk', mult: 2.5, width: 60 } },
   { name: '狙撃手', icon: '🎯', damage: 45, range: 300, speed: 2.5, maxHp: 60, color: '#228888',
-    desc: '超長射程の一撃必殺' },
+    desc: '超長射程の一撃必殺',
+    skill: { name: '必中射', cd: 15, desc: 'HP最大の敵に超特大ダメージ', type: 'snipe', mult: 5.0 } },
   { name: '踊り子', icon: '💃', damage: 8, range: 160, speed: 1.2, maxHp: 70, color: '#ee55aa',
-    desc: '攻撃＋全体スロー付与', splash: 80, slow: 0.2 },
+    desc: '攻撃＋全体スロー付与', splash: 80, slow: 0.2,
+    skill: { name: '鼓舞の舞', cd: 16, desc: '全味方の攻撃力を一定時間UP', type: 'buff_all', dur: 6, atkMult: 1.5 } },
 ];
 
 // 上位職定義 (転職先)
 // baseJob: 元の職業インデックス, reqLevel: 必要レベル, examCost: 試験費用(結晶)
 const ADVANCED_DEFS = [
   { name: '剣聖', icon: '🗡️', damage: 35, range: 100, speed: 0.7, maxHp: 200, color: '#ff2222',
-    desc: '極限の剣技を極めし者', baseJob: 0, reqLevel: 10, examCost: 40 },
+    desc: '極限の剣技を極めし者', baseJob: 0, reqLevel: 10, examCost: 40,
+    skill: { name: '剣気嵐', cd: 10, desc: '超広範囲の剣気で薙ぎ払う', type: 'aoe_self', mult: 3.5, radius: 180 } },
   { name: '弓聖', icon: '🎯', damage: 22, range: 280, speed: 0.8, maxHp: 100, color: '#22ee22',
-    desc: '神域の弓を持つ射手', baseJob: 1, reqLevel: 10, examCost: 40 },
+    desc: '神域の弓を持つ射手', baseJob: 1, reqLevel: 10, examCost: 40,
+    skill: { name: '天矢乱舞', cd: 12, desc: '無数の矢で広範囲を制圧', type: 'aoe_area', mult: 2.5, radius: 150 } },
   { name: '大魔導士', icon: '🌟', damage: 30, range: 220, speed: 1.3, maxHp: 90, color: '#aa44ff',
-    desc: '全てを焼き尽くす大魔法', baseJob: 2, reqLevel: 10, examCost: 50, splash: 90, slow: 0.4 },
+    desc: '全てを焼き尽くす大魔法', baseJob: 2, reqLevel: 10, examCost: 50, splash: 90, slow: 0.4,
+    skill: { name: 'アポカリプス', cd: 14, desc: '画面全体に壊滅的な魔法', type: 'aoe_area', mult: 4.0, radius: 200 } },
   { name: '聖王', icon: '👑', damage: 22, range: 120, speed: 0.9, maxHp: 350, color: '#ffdd00',
-    desc: '不滅の盾を持つ王者', baseJob: 3, reqLevel: 10, examCost: 50 },
+    desc: '不滅の盾を持つ王者', baseJob: 3, reqLevel: 10, examCost: 50,
+    skill: { name: '神聖結界', cd: 15, desc: 'コア大回復+敵全体スロー', healPct: 0.35, type: 'heal_core_slow', slowDur: 3, slowAmt: 0.5 } },
   { name: '影忍', icon: '🌑', damage: 18, range: 140, speed: 0.3, maxHp: 120, color: '#8844cc',
-    desc: '影から瞬殺する暗殺者', baseJob: 4, reqLevel: 10, examCost: 45 },
+    desc: '影から瞬殺する暗殺者', baseJob: 4, reqLevel: 10, examCost: 45,
+    skill: { name: '影殺', cd: 8, desc: '攻撃力3倍+速度3倍で暴走', type: 'buff_self', dur: 5, atkMult: 3.0, spdMult: 0.33 } },
   { name: '竜騎士', icon: '🐉', damage: 28, range: 160, speed: 0.9, maxHp: 180, color: '#ee8833',
-    desc: '竜の力を得た突撃兵', baseJob: 5, reqLevel: 10, examCost: 45, splash: 60 },
+    desc: '竜の力を得た突撃兵', baseJob: 5, reqLevel: 10, examCost: 45, splash: 60,
+    skill: { name: '竜の息吹', cd: 11, desc: '前方に灼熱のブレスを放つ', type: 'line_atk', mult: 3.5, width: 80 } },
   { name: '魔弾の射手', icon: '💥', damage: 70, range: 350, speed: 2.2, maxHp: 75, color: '#11aaaa',
-    desc: '必中の魔弾を放つ', baseJob: 6, reqLevel: 10, examCost: 55 },
+    desc: '必中の魔弾を放つ', baseJob: 6, reqLevel: 10, examCost: 55,
+    skill: { name: '魔弾', cd: 12, desc: 'HP最大の敵に壊滅的一撃', type: 'snipe', mult: 8.0 } },
   { name: '神楽巫女', icon: '🌸', damage: 14, range: 200, speed: 1.0, maxHp: 90, color: '#ff66cc',
-    desc: '神の加護で全体弱体化', baseJob: 7, reqLevel: 10, examCost: 50, splash: 120, slow: 0.35 },
+    desc: '神の加護で全体弱体化', baseJob: 7, reqLevel: 10, examCost: 50, splash: 120, slow: 0.35,
+    skill: { name: '神楽', cd: 14, desc: '全味方強化+全敵スロー', type: 'buff_all_slow', dur: 7, atkMult: 1.8, slowDur: 4, slowAmt: 0.5 } },
 ];
 
 // 転職状態: 各上位職の合格フラグ
@@ -2079,6 +2173,7 @@ function loadGame() {
         base.desc = adv.desc;
         if (adv.splash) base.splash = adv.splash;
         if (adv.slow) base.slow = adv.slow;
+        if (adv.skill) base.skill = adv.skill;
       }
     }
 
@@ -2262,6 +2357,7 @@ function init() {
   enemies = [];
   projectiles = [];
   particles = [];
+  skillEffects = [];
   selectedAlly = null;
   waveActive = false;
   spawning = false;
@@ -2295,14 +2391,21 @@ function init() {
       x: pos.x,
       y: pos.y,
       damage: def.damage * enh.damageMult * lvB.damageMult * wAtkMult,
+      baseDamage: def.damage * enh.damageMult * lvB.damageMult * wAtkMult,
       range: def.range + enh.rangePlus + lvB.rangePlus + wRangePlus,
       speed: def.speed * enh.speedMult * lvB.speedMult * wSpeedMult,
+      baseSpeed: def.speed * enh.speedMult * lvB.speedMult * wSpeedMult,
       color: def.color,
       splash: def.splash || 0,
       slow: def.slow || 0,
       cooldown: 0,
       angle: Math.PI,
       attackAnim: 0,
+      skillCd: 0,
+      skillMaxCd: def.skill ? def.skill.cd : 0,
+      buffTimer: 0,
+      buffAtkMult: 1,
+      buffSpdMult: 1,
     });
   }
 
@@ -2375,6 +2478,184 @@ function updateAllyInfo() {
   document.getElementById('info-range').textContent = Math.round(a.range) + 'px';
   document.getElementById('info-speed').textContent = a.speed.toFixed(2) + 's';
   document.getElementById('info-xp').textContent = alv >= LEVEL_MAX ? 'MAX' : axp + '/' + nextXP;
+
+  // スキルボタン更新
+  const skillSec = document.getElementById('skill-section');
+  const def = ALLY_DEFS[a.type];
+  if (def.skill) {
+    const sk = def.skill;
+    const allyIdx = allies.indexOf(a);
+    const onCd = a.skillCd > 0;
+    const cdPct = onCd ? (1 - a.skillCd / a.skillMaxCd) * 100 : 100;
+    const cdText = onCd ? ` (${Math.ceil(a.skillCd)}s)` : '';
+    const buffHtml = a.buffTimer > 0 ? `<div class="buff-indicator">✨ 強化中 ${Math.ceil(a.buffTimer)}s</div>` : '';
+    skillSec.innerHTML = `
+      <button class="skill-btn ${onCd ? 'on-cooldown' : ''}" onclick="useSkill(${allyIdx})" ${onCd ? 'disabled' : ''}>
+        ⚡ ${sk.name}${cdText}
+        <div class="skill-btn-desc">${sk.desc} (CD: ${sk.cd}s)</div>
+        <div class="skill-cd-bar" style="width:${cdPct}%"></div>
+      </button>
+      ${buffHtml}
+    `;
+  } else {
+    skillSec.innerHTML = '';
+  }
+}
+
+let skillEffects = [];
+
+function useSkill(allyIdx) {
+  const a = allies[allyIdx];
+  if (!a || a.skillCd > 0 || gameOver || victory) return;
+  const def = ALLY_DEFS[a.type];
+  if (!def.skill) return;
+  const sk = def.skill;
+  a.skillCd = sk.cd;
+
+  switch (sk.type) {
+    case 'aoe_self': {
+      // 自分の周囲にダメージ
+      playSE('skill');
+      const dmg = a.baseDamage * sk.mult;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        const dx = e.x - a.x, dy = e.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= sk.radius) {
+          dealDamage(e, dmg * (1 - dist / sk.radius * 0.3));
+          for (let i = 0; i < 3; i++) particles.push(createParticle(e.x, e.y, a.color));
+        }
+      }
+      skillEffects.push({ type: 'circle', x: a.x, y: a.y, radius: sk.radius, color: a.color, timer: 0.6, maxTimer: 0.6 });
+      break;
+    }
+    case 'aoe_area': {
+      // 敵が最も密集している場所にダメージ
+      playSE('skill');
+      let bestX = 400, bestY = 300, bestCount = 0;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        let cnt = 0;
+        for (const e2 of enemies) {
+          if (!e2.alive) continue;
+          const d = Math.sqrt((e2.x - e.x) ** 2 + (e2.y - e.y) ** 2);
+          if (d <= sk.radius) cnt++;
+        }
+        if (cnt > bestCount) { bestCount = cnt; bestX = e.x; bestY = e.y; }
+      }
+      const dmg = a.baseDamage * sk.mult;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        const d = Math.sqrt((e.x - bestX) ** 2 + (e.y - bestY) ** 2);
+        if (d <= sk.radius) {
+          dealDamage(e, dmg * (1 - d / sk.radius * 0.3));
+          for (let i = 0; i < 3; i++) particles.push(createParticle(e.x, e.y, '#ff8800'));
+        }
+      }
+      skillEffects.push({ type: 'circle', x: bestX, y: bestY, radius: sk.radius, color: '#ff6600', timer: 0.8, maxTimer: 0.8 });
+      skillEffects.push({ type: 'impact', x: bestX, y: bestY, timer: 0.5, maxTimer: 0.5 });
+      break;
+    }
+    case 'heal_core': {
+      // コアHP回復
+      playSE('heal');
+      const heal = Math.floor(core.maxHp * sk.healPct);
+      core.hp = Math.min(core.maxHp, core.hp + heal);
+      updateHUD();
+      skillEffects.push({ type: 'heal', x: CORE_X, y: CORE_Y, timer: 1.0, maxTimer: 1.0 });
+      break;
+    }
+    case 'heal_core_slow': {
+      // コアHP回復 + 全敵スロー
+      playSE('heal');
+      const heal = Math.floor(core.maxHp * sk.healPct);
+      core.hp = Math.min(core.maxHp, core.hp + heal);
+      updateHUD();
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        e.slowTimer = sk.slowDur;
+        e._slowAmount = sk.slowAmt;
+      }
+      skillEffects.push({ type: 'heal', x: CORE_X, y: CORE_Y, timer: 1.0, maxTimer: 1.0 });
+      skillEffects.push({ type: 'slow_wave', timer: 0.8, maxTimer: 0.8 });
+      break;
+    }
+    case 'buff_self': {
+      // 自分を強化
+      playSE('buff');
+      a.buffTimer = sk.dur;
+      a.buffAtkMult = sk.atkMult;
+      a.buffSpdMult = sk.spdMult;
+      a.damage = a.baseDamage * sk.atkMult;
+      a.speed = a.baseSpeed * sk.spdMult;
+      skillEffects.push({ type: 'buff', x: a.x, y: a.y, timer: 0.6, maxTimer: 0.6, color: '#ffdd00' });
+      break;
+    }
+    case 'buff_all': {
+      // 全味方の攻撃力UP
+      playSE('buff');
+      for (const ally of allies) {
+        ally.buffTimer = sk.dur;
+        ally.buffAtkMult = sk.atkMult;
+        ally.buffSpdMult = 1;
+        ally.damage = ally.baseDamage * sk.atkMult;
+        skillEffects.push({ type: 'buff', x: ally.x, y: ally.y, timer: 0.6, maxTimer: 0.6, color: '#ff88cc' });
+      }
+      break;
+    }
+    case 'buff_all_slow': {
+      // 全味方強化 + 全敵スロー
+      playSE('buff');
+      for (const ally of allies) {
+        ally.buffTimer = sk.dur;
+        ally.buffAtkMult = sk.atkMult;
+        ally.buffSpdMult = 1;
+        ally.damage = ally.baseDamage * sk.atkMult;
+        skillEffects.push({ type: 'buff', x: ally.x, y: ally.y, timer: 0.6, maxTimer: 0.6, color: '#ff88cc' });
+      }
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        e.slowTimer = sk.slowDur;
+        e._slowAmount = sk.slowAmt;
+      }
+      skillEffects.push({ type: 'slow_wave', timer: 0.8, maxTimer: 0.8 });
+      break;
+    }
+    case 'line_atk': {
+      // 前方直線ダメージ
+      playSE('skill');
+      const dmg = a.baseDamage * sk.mult;
+      const halfW = sk.width / 2;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        // 前方（左方向）の敵で、Y座標がwidth内のもの
+        if (e.x < a.x && Math.abs(e.y - a.y) < halfW) {
+          dealDamage(e, dmg);
+          for (let i = 0; i < 4; i++) particles.push(createParticle(e.x, e.y, a.color));
+        }
+      }
+      skillEffects.push({ type: 'line', x: a.x, y: a.y, width: sk.width, color: a.color, timer: 0.5, maxTimer: 0.5 });
+      break;
+    }
+    case 'snipe': {
+      // HP最大の敵に超特大ダメージ
+      playSE('skill');
+      let maxHpEnemy = null, maxHp = 0;
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        if (e.hp > maxHp) { maxHp = e.hp; maxHpEnemy = e; }
+      }
+      if (maxHpEnemy) {
+        const dmg = a.baseDamage * sk.mult;
+        dealDamage(maxHpEnemy, dmg);
+        for (let i = 0; i < 8; i++) particles.push(createParticle(maxHpEnemy.x, maxHpEnemy.y, '#00ffff'));
+        skillEffects.push({ type: 'snipe_line', x1: a.x, y1: a.y, x2: maxHpEnemy.x, y2: maxHpEnemy.y, timer: 0.4, maxTimer: 0.4 });
+      }
+      break;
+    }
+  }
+
+  updateAllyInfo();
 }
 
 const SPEED_OPTIONS = [1, 2, 3, 5, 10];
@@ -2531,6 +2812,7 @@ function gameLoop(timestamp) {
     }
   }
   render();
+  if (selectedAlly) updateAllyInfo();
   loopId = requestAnimationFrame(gameLoop);
 }
 
@@ -2661,6 +2943,27 @@ function update(dt) {
 
   // 死んだ敵除去
   enemies = enemies.filter(e => e.alive);
+
+  // 味方スキルクールダウン & バフ管理
+  for (const a of allies) {
+    if (a.skillCd > 0) a.skillCd = Math.max(0, a.skillCd - dt);
+    if (a.buffTimer > 0) {
+      a.buffTimer -= dt;
+      if (a.buffTimer <= 0) {
+        a.buffTimer = 0;
+        a.damage = a.baseDamage;
+        a.speed = a.baseSpeed;
+        a.buffAtkMult = 1;
+        a.buffSpdMult = 1;
+      }
+    }
+  }
+
+  // スキルエフェクト更新
+  for (const ef of skillEffects) {
+    ef.timer -= dt;
+  }
+  skillEffects = skillEffects.filter(ef => ef.timer > 0);
 
   // 味方攻撃
   for (const a of allies) {
@@ -3032,6 +3335,35 @@ function render() {
 
     drawAllyCharacter(drawX, a.y, a.type, a.color, a.attackAnim > 0);
 
+    // バフ中のオーラ
+    if (a.buffTimer > 0) {
+      const pulse = 0.4 + Math.sin(Date.now() * 0.008) * 0.2;
+      ctx.beginPath();
+      ctx.arc(drawX, a.y, 24, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 220, 50, ${pulse})`;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+
+    // スキルクールダウン表示（円弧）
+    if (a.skillCd > 0 && a.skillMaxCd > 0) {
+      const cdRatio = a.skillCd / a.skillMaxCd;
+      ctx.beginPath();
+      ctx.arc(drawX, a.y - 26, 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - cdRatio));
+      ctx.strokeStyle = '#aa66ff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillStyle = '#ddb0ff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(Math.ceil(a.skillCd), drawX, a.y - 26);
+    }
+
     // 選択ハイライト
     if (selectedAlly === a) {
       ctx.beginPath();
@@ -3069,6 +3401,113 @@ function render() {
     ctx.globalAlpha = 1;
     ctx.lineWidth = 1;
   }
+
+  // スキルエフェクト描画
+  for (const ef of skillEffects) {
+    const progress = 1 - ef.timer / ef.maxTimer;
+    ctx.globalAlpha = Math.max(0, ef.timer / ef.maxTimer);
+
+    if (ef.type === 'circle') {
+      const r = ef.radius * (0.3 + progress * 0.7);
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = ef.color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = ef.color.replace(')', ', 0.1)').replace('rgb', 'rgba');
+      if (ef.color.startsWith('#')) {
+        const hex = ef.color;
+        const rr = parseInt(hex.slice(1,3),16), gg = parseInt(hex.slice(3,5),16), bb = parseInt(hex.slice(5,7),16);
+        ctx.fillStyle = `rgba(${rr},${gg},${bb},0.15)`;
+      }
+      ctx.fill();
+      ctx.lineWidth = 1;
+    }
+
+    if (ef.type === 'impact') {
+      const size = 20 + progress * 30;
+      ctx.font = `${size}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('💥', ef.x, ef.y);
+    }
+
+    if (ef.type === 'heal') {
+      const rr = 20 + progress * 25;
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, rr, 0, Math.PI * 2);
+      ctx.strokeStyle = '#44ff88';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      // 十字マーク
+      ctx.strokeStyle = '#88ffaa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ef.x - 8, ef.y); ctx.lineTo(ef.x + 8, ef.y);
+      ctx.moveTo(ef.x, ef.y - 8); ctx.lineTo(ef.x, ef.y + 8);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+
+    if (ef.type === 'buff') {
+      const rr = 16 + progress * 12;
+      ctx.beginPath();
+      ctx.arc(ef.x, ef.y, rr, 0, Math.PI * 2);
+      ctx.strokeStyle = ef.color || '#ffdd00';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      // 上昇する矢印パーティクル
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⬆', ef.x, ef.y - 15 - progress * 20);
+    }
+
+    if (ef.type === 'line') {
+      ctx.beginPath();
+      ctx.moveTo(ef.x, ef.y - ef.width / 2);
+      ctx.lineTo(0, ef.y - ef.width / 2);
+      ctx.lineTo(0, ef.y + ef.width / 2);
+      ctx.lineTo(ef.x, ef.y + ef.width / 2);
+      ctx.closePath();
+      const hex = ef.color;
+      const rr = parseInt(hex.slice(1,3),16), gg = parseInt(hex.slice(3,5),16), bb = parseInt(hex.slice(5,7),16);
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},0.25)`;
+      ctx.fill();
+      ctx.strokeStyle = ef.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+
+    if (ef.type === 'snipe_line') {
+      ctx.beginPath();
+      ctx.moveTo(ef.x1, ef.y1);
+      ctx.lineTo(ef.x2, ef.y2);
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // クロスヘアー
+      ctx.beginPath();
+      ctx.arc(ef.x2, ef.y2, 12 - progress * 8, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+
+    if (ef.type === 'slow_wave') {
+      const r = progress * CANVAS_W * 0.6;
+      ctx.beginPath();
+      ctx.arc(CANVAS_W / 2, CANVAS_H / 2, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(100, 150, 255, 0.6)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+  }
+  ctx.globalAlpha = 1;
 
   // パーティクル描画
   for (const p of particles) {
@@ -4265,6 +4704,7 @@ function doJobChange(advIdx) {
   base.desc = adv.desc;
   if (adv.splash) base.splash = adv.splash;
   if (adv.slow) base.slow = adv.slow;
+  if (adv.skill) base.skill = adv.skill;
 
   jobChanged[adv.baseJob] = true;
   alert(ALLY_DEFS[adv.baseJob].name + ' に転職しました！');
@@ -4379,6 +4819,6 @@ function updateSaveInfo() {
   el.textContent = text;
 }
 </script>
-<div id="version-label">v0.16.0</div>
+<div id="version-label">v0.17.0</div>
 </body>
 </html>
